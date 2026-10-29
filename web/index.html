@@ -1,46 +1,1241 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="$FLUTTER_BASE_HREF">
-
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
-
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="copas_erp">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
-
-  <title>copas_erp</title>
-  <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COPAS ERP — Sistem Informasi Manajemen Operasional Warung Copas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        copas: {
+                            50: '#fdf8f6',
+                            100: '#fbe8e6',
+                            500: '#d97706',
+                            600: '#b45309',
+                            700: '#92400e',
+                            850: '#78350f',
+                            900: '#451a03',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
+    <!-- Notification Toast Modal -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-bg" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-white font-medium">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-xl"></i>
+            <span id="toast-msg">Notifikasi sistem berhasil.</span>
+        </div>
+    </div>
+
+    <!-- 1. LOGIN & AUTHENTICATION VIEW -->
+    <div id="login-view" class="flex-1 flex items-center justify-center p-4 bg-gradient-to-br from-copas-900 via-copas-850 to-amber-900">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-amber-100">
+            <div class="bg-gradient-to-r from-copas-700 to-amber-600 p-8 text-center text-white">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-2xl mb-3 backdrop-blur-sm border border-white/20">
+                    <i class="fa-solid fa-mug-hot text-3xl text-amber-200"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-wider">COPAS ERP</h1>
+                <p class="text-amber-100 text-sm mt-1">Sistem Manajemen Operasional Warung Copas</p>
+            </div>
+            
+            <div class="p-8 space-y-6">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Pilih Role Akses Sistem</label>
+                    <select id="role-selector" onchange="updateLoginInput(this.value)" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <option value="admin">👑 Pemilik / Admin (Akses Penuh ERP & Laporan)</option>
+                        <option value="kasir">💳 Kasir (Pembayaran & Konfirmasi Booking)</option>
+                        <option value="pelayan">🛎️ Pelayan / Waiter (Pemesanan & Status Meja)</option>
+                        <option value="dapur">🍳 Dapur (Pesanan, Stok & Supplier)</option>
+                        <option value="pelanggan">🌐 Pelanggan (Website Publik & Booking Online)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Simulasi Akun Pengguna</label>
+                    <input type="text" id="login-user-input" value="Ahmad Administrator" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" readonly>
+                </div>
+
+                <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-amber-600 to-copas-700 hover:from-amber-700 hover:to-copas-800 text-white font-semibold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Masuk ke Sistem ERP
+                </button>
+
+                <div class="text-center">
+                    <span class="text-xs text-gray-400">Warung Copas Integration Platform v3.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MAIN ERP APP WRAPPER -->
+    <div id="app-wrapper" class="flex-1 flex flex-col hidden">
+        
+        <!-- Top Navbar -->
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-copas-700 font-bold text-lg">
+                    <div class="w-9 h-9 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700">
+                        <i class="fa-solid fa-mug-hot"></i>
+                    </div>
+                    <span>COPAS <span class="text-amber-600">ERP</span></span>
+                </div>
+                <div class="h-6 w-px bg-gray-200 hidden md:block"></div>
+                <span id="role-badge" class="px-3 py-1 bg-amber-50 text-amber-800 text-xs font-semibold rounded-full border border-amber-200">Role: Admin</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <div id="nav-username" class="text-sm font-semibold text-gray-700">Ahmad Administrator</div>
+                    <div id="nav-userrole" class="text-xs text-gray-400">Pemilik Usaha</div>
+                </div>
+                <button onclick="logout()" class="flex items-center gap-2 bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors">
+                    <i class="fa-solid fa-power-off"></i> <span class="hidden sm:inline">Keluar</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Body Layout -->
+        <div class="flex-1 flex overflow-hidden">
+            <!-- Sidebar Navigation -->
+            <aside id="sidebar-nav" class="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 overflow-y-auto">
+                <!-- Populated dynamically via JS -->
+            </aside>
+
+            <!-- Dynamic Content Area -->
+            <main id="main-content" class="flex-1 bg-gray-50 overflow-y-auto p-6 md:p-8">
+                <!-- Content dynamically injected -->
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL CONTAINER -->
+    <div id="global-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div id="modal-box" class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <!-- Dynamic Modal Content -->
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC & MODULES -->
+    <script>
+        let currentRole = 'admin';
+        let currentUserData = { name: 'Ahmad Administrator', title: 'Pemilik / Admin' };
+        let salesChartInstance = null;
+
+        // Dataset Mock Dinamis
+        let menus = [
+            { id: 1, name: 'Kopi Susu Gula Aren', cat: 'Minuman', price: 18000, stock: 'Aman', img: 'https://placehold.co/100x100/f59e0b/ffffff?text=Kopi' },
+            { id: 2, name: 'Mie Instan Copas Special', cat: 'Makanan', price: 15000, stock: 'Aman', img: 'https://placehold.co/100x100/ef4444/ffffff?text=Mie' },
+            { id: 3, name: 'Roti Bakar Coklat Keju', cat: 'Snack', price: 14000, stock: 'Aman', img: 'https://placehold.co/100x100/10b981/ffffff?text=Roti' },
+            { id: 4, name: 'Es Teh Manis Jumbo', cat: 'Minuman', price: 6000, stock: 'Aman', img: 'https://placehold.co/100x100/3b82f6/ffffff?text=Teh' }
+        ];
+
+        let orders = [
+            { id: 'ORD-001', table: 'Meja 03', customer: 'Rian Putra', items: '2x Kopi Susu Aren, 1x Mie Copas', total: 51000, status: 'Siap Saji', time: '10:45 WIB' },
+            { id: 'ORD-002', table: 'Meja 05', customer: 'Siti Aminah', items: '1x Roti Bakar, 2x Es Teh', total: 26000, status: 'Diproses', time: '11:02 WIB' },
+            { id: 'ORD-003', table: 'VIP 01', customer: 'Yoga Pratama', items: '3x Kopi Susu Aren', total: 54000, status: 'Menunggu', time: '11:15 WIB' }
+        ];
+
+        let employees = [
+            { id: 'EMP-01', name: 'Ahmad Administrator', role: 'Admin', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
+            { id: 'EMP-02', name: 'Sinta Kasir', role: 'Kasir', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
+            { id: 'EMP-03', name: 'Joko Pelayan', role: 'Pelayan', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
+            { id: 'EMP-04', name: 'Chef Budi', role: 'Dapur', shift: 'Shift Siang (14:00 - 22:00)', status: 'Aktif' },
+            { id: 'EMP-05', name: 'Dewi Waiter', role: 'Pelayan', shift: 'Shift Siang (14:00 - 22:00)', status: 'Aktif' }
+        ];
+
+        let reservations = [
+            { code: 'COP-8821', name: 'Dimas Anggara', date: '2026-06-06', time: '19:00', pax: 4, table: 'Meja Utama 02', status: 'Confirmed', phone: '081234567890' },
+            { code: 'COP-8822', name: 'Rahmat Hidayat', date: '2026-06-06', time: '20:00', pax: 6, table: 'Area Outdoor 04', status: 'Pending', phone: '089876543210' }
+        ];
+
+        let ingredients = [
+            { code: 'ING-01', name: 'Biji Kopi Robusta', stock: 12, min: 5, unit: 'Kg', supplier: 'PT Kopi Nusantara' },
+            { code: 'ING-02', name: 'Susu UHT Full Cream', stock: 3, min: 8, unit: 'Liter', supplier: 'CV Susu Murni' },
+            { code: 'ING-03', name: 'Gula Aren Cair', stock: 15, min: 5, unit: 'Liter', supplier: 'UD Manis Jaya' },
+            { code: 'ING-04', name: 'Mie Instan Goreng', stock: 45, min: 20, unit: 'Pcs', supplier: 'Toko Berkah' }
+        ];
+
+        let activeCart = [];
+        let attendanceState = { status: 'Belum Presensi', clockIn: '-', clockOut: '-' };
+        let activeTab = '';
+
+        function updateLoginInput(role) {
+            const roleDetails = {
+                admin: { name: 'Ahmad Administrator', title: 'Pemilik / Admin' },
+                kasir: { name: 'Sinta Kasir', title: 'Kasir & Pembayaran' },
+                pelayan: { name: 'Joko Pelayan', title: 'Pelayan / Waiter' },
+                dapur: { name: 'Chef Budi', title: 'Dapur & Inventaris' },
+                pelanggan: { name: 'Pengunjung Umum', title: 'Pelanggan Publik' }
+            };
+            document.getElementById('login-user-input').value = roleDetails[role].name;
+        }
+
+        function handleLogin() {
+            const selector = document.getElementById('role-selector');
+            currentRole = selector.value;
+            
+            const roleDetails = {
+                admin: { name: 'Ahmad Administrator', title: 'Pemilik / Admin' },
+                kasir: { name: 'Sinta Kasir', title: 'Kasir & Pembayaran' },
+                pelayan: { name: 'Joko Pelayan', title: 'Pelayan / Waiter' },
+                dapur: { name: 'Chef Budi', title: 'Dapur & Inventaris' },
+                pelanggan: { name: 'Pengunjung Umum', title: 'Pelanggan Publik' }
+            };
+
+            currentUserData = roleDetails[currentRole];
+            document.getElementById('nav-username').innerText = currentUserData.name;
+            document.getElementById('nav-userrole').innerText = currentUserData.title;
+            document.getElementById('role-badge').innerText = `Role: ${currentUserData.title}`;
+
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.remove('hidden');
+
+            renderSidebar();
+            switchTab(getDefaultTab(currentRole));
+            showToast(`Berhasil masuk sebagai ${currentUserData.title}`, 'success');
+        }
+
+        function logout() {
+            document.getElementById('app-wrapper').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            showToast('Sesi ERP diakhiri.', 'info');
+        }
+
+        function getDefaultTab(role) {
+            switch(role) {
+                case 'admin': return 'dash-admin';
+                case 'kasir': return 'kasir-transaksi';
+                case 'pelayan': return 'pelayan-pesanan';
+                case 'dapur': return 'dapur-pesanan';
+                case 'pelanggan': return 'pelanggan-home';
+            }
+        }
+
+        function renderSidebar() {
+            const sb = document.getElementById('sidebar-nav');
+            let html = '<div class="p-4 space-y-1">';
+
+            if (currentRole === 'admin') {
+                html += `
+                    <button onclick="switchTab('dash-admin')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-amber-700 bg-amber-50"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</button>
+                    <button onclick="switchTab('admin-menu')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-utensils w-5"></i> Manajemen Menu</button>
+                    <button onclick="switchTab('admin-users')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-users-gear w-5"></i> Manajemen Pengguna</button>
+                    <button onclick="switchTab('admin-presensi')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-clipboard-user w-5"></i> Monitoring Presensi</button>
+                    <button onclick="switchTab('admin-inventaris')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-boxes-stacked w-5"></i> Monitoring Inventaris</button>
+                    <button onclick="switchTab('admin-reservasi')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-calendar-check w-5"></i> Monitoring Reservasi</button>
+                    <button onclick="switchTab('admin-laporan')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-file-invoice-dollar w-5"></i> Laporan Operasional</button>
+                `;
+            } else if (currentRole === 'kasir') {
+                html += `
+                    <button onclick="switchTab('kasir-transaksi')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-amber-700 bg-amber-50"><i class="fa-solid fa-cash-register w-5"></i> Manajemen Transaksi</button>
+                    <button onclick="switchTab('kasir-booking')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-calendar-days w-5"></i> Konfirmasi Booking</button>
+                    <button onclick="switchTab('shared-presensi')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-fingerprint w-5"></i> Presensi Karyawan</button>
+                `;
+            } else if (currentRole === 'pelayan') {
+                html += `
+                    <button onclick="switchTab('pelayan-pesanan')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-amber-700 bg-amber-50"><i class="fa-solid fa-cart-shopping w-5"></i> Buat Pesanan Baru</button>
+                    <button onclick="switchTab('pelayan-monitoring')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-list-check w-5"></i> Status Pesanan Meja</button>
+                    <button onclick="switchTab('shared-presensi')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-fingerprint w-5"></i> Presensi Karyawan</button>
+                `;
+            } else if (currentRole === 'dapur') {
+                html += `
+                    <button onclick="switchTab('dapur-pesanan')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-amber-700 bg-amber-50"><i class="fa-solid fa-fire-burner w-5"></i> Pesanan Masuk Dapur</button>
+                    <button onclick="switchTab('dapur-bahan')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-box w-5"></i> Manajemen Bahan Baku</button>
+                    <button onclick="switchTab('dapur-supplier')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-truck-field w-5"></i> Data Supplier</button>
+                    <button onclick="switchTab('shared-presensi')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-fingerprint w-5"></i> Presensi Karyawan</button>
+                `;
+            } else if (currentRole === 'pelanggan') {
+                html += `
+                    <button onclick="switchTab('pelanggan-home')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-amber-700 bg-amber-50"><i class="fa-solid fa-store w-5"></i> Informasi & Menu</button>
+                    <button onclick="switchTab('pelanggan-booking')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-calendar-days w-5"></i> Booking Tempat Online</button>
+                    <button onclick="switchTab('pelanggan-status')" class="s-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100"><i class="fa-solid fa-magnifying-glass w-5"></i> Cek Status Reservasi</button>
+                `;
+            }
+
+            html += '</div>';
+            sb.innerHTML = html;
+        }
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.s-btn').forEach(b => {
+                b.classList.remove('bg-amber-50', 'text-amber-700', 'font-semibold');
+                b.classList.add('text-gray-600', 'font-medium');
+                if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(tabId)) {
+                    b.classList.add('bg-amber-50', 'text-amber-700', 'font-semibold');
+                    b.classList.remove('text-gray-600', 'font-medium');
+                }
+            });
+            renderContent(tabId);
+        }
+
+        function renderContent(id) {
+            const c = document.getElementById('main-content');
+            c.innerHTML = '';
+
+            if (id === 'dash-admin') {
+                const totalRevenue = orders.filter(o => o.status === 'Selesai').reduce((acc, curr) => acc + curr.total, 2450000);
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Dashboard Pemilik / Admin</h1>
+                                <p class="text-sm text-gray-500">Monitoring real-time operasional Warung Copas.</p>
+                            </div>
+                            <button onclick="renderContent('dash-admin'); showToast('Dashboard disinkronkan', 'success')" class="bg-white border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 shadow-xs flex items-center gap-2"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+                                <p class="text-xs font-semibold text-gray-400 uppercase">Total Pendapatan Harian</p>
+                                <h3 class="text-xl font-bold text-gray-800 mt-1">Rp ${totalRevenue.toLocaleString()}</h3>
+                                <span class="text-xs text-emerald-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up"></i> Real-time update</span>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+                                <p class="text-xs font-semibold text-gray-400 uppercase">Total Transaksi</p>
+                                <h3 class="text-xl font-bold text-gray-800 mt-1">${orders.length + 80} Transaksi</h3>
+                                <span class="text-xs text-blue-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-receipt"></i> Terhitung</span>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+                                <p class="text-xs font-semibold text-gray-400 uppercase">Total Pesanan Aktif</p>
+                                <h3 class="text-xl font-bold text-gray-800 mt-1">${orders.length} Pesanan</h3>
+                                <span class="text-xs text-amber-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-utensils"></i> Dalam proses</span>
+                            </div>
+                            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+                                <p class="text-xs font-semibold text-gray-400 uppercase">Total Booking</p>
+                                <h3 class="text-xl font-bold text-gray-800 mt-1">${reservations.length} Reservasi</h3>
+                                <span class="text-xs text-purple-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-calendar"></i> Aktif</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs lg:col-span-2">
+                                <h3 class="text-lg font-bold text-gray-800 mb-4">Grafik Penjualan Mingguan Warung Copas</h3>
+                                <canvas id="adminSalesChart" height="110"></canvas>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800 mb-2">Peringatan Inventaris Dapur</h3>
+                                    <div class="bg-red-50 border border-red-200 p-4 rounded-xl space-y-2 mt-4">
+                                        <div class="flex items-center gap-2 text-red-700 font-bold text-sm"><i class="fa-solid fa-triangle-exclamation"></i> Susu UHT Full Cream</div>
+                                        <p class="text-xs text-red-600">Stok tersisa 3 Liter (Batas Min: 8 L). Segera lakukan pemesanan ke CV Susu Murni.</p>
+                                    </div>
+                                </div>
+                                <div class="mt-6">
+                                    <button onclick="switchTab('admin-inventaris')" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Kelola Inventaris</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                setTimeout(initAdminChart, 100);
+            }
+            else if (id === 'admin-menu') {
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Manajemen Menu</h1>
+                                <p class="text-sm text-gray-500">Tambah, ubah, atau hapus menu makanan dan minuman.</p>
+                            </div>
+                            <button onclick="openMenuModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-sm flex items-center gap-2"><i class="fa-solid fa-plus"></i> Tambah Menu</button>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
+                                        <th class="p-4">Menu</th>
+                                        <th class="p-4">Kategori</th>
+                                        <th class="p-4">Harga</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 text-sm">
+                                    ${menus.map(m => `
+                                        <tr>
+                                            <td class="p-4 flex items-center gap-3">
+                                                <img src="${m.img}" class="w-10 h-10 rounded-xl object-cover border">
+                                                <span class="font-semibold text-gray-800">${m.name}</span>
+                                            </td>
+                                            <td class="p-4 text-gray-600">${m.cat}</td>
+                                            <td class="p-4 font-semibold text-amber-700">Rp ${m.price.toLocaleString()}</td>
+                                            <td class="p-4"><span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">Tersedia</span></td>
+                                            <td class="p-4 text-center space-x-2">
+                                                <button onclick="openMenuModal(${m.id})" class="text-blue-600 p-2 hover:bg-blue-50 rounded-lg"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button onclick="deleteMenu(${m.id})" class="text-red-600 p-2 hover:bg-red-50 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'admin-users') {
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Manajemen Pengguna & Data Karyawan</h1>
+                                <p class="text-sm text-gray-500">Tambah pegawai baru, atur shift kerja, dan hak akses presensi.</p>
+                            </div>
+                            <button onclick="openAddEmployeeModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm"><i class="fa-solid fa-user-plus"></i> Tambah Pegawai</button>
+                        </div>
+
+                        <!-- Form Tambah Pegawai (Inline Card) -->
+                        <div id="add-employee-card" class="hidden bg-white p-6 rounded-2xl border border-amber-200 shadow-md space-y-4">
+                            <h3 class="font-bold text-gray-800 text-base flex items-center gap-2"><i class="fa-solid fa-id-card text-amber-600"></i> Form Pendaftaran Pegawai Baru</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nama Lengkap</label>
+                                    <input type="text" id="new-emp-name" placeholder="Cth. Rian Karyawan" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Role / Hak Akses</label>
+                                    <select id="new-emp-role" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm font-medium">
+                                        <option value="Kasir">Kasir</option>
+                                        <option value="Pelayan">Pelayan</option>
+                                        <option value="Dapur">Dapur</option>
+                                        <option value="Admin">Admin</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Jadwal Shift Kerja</label>
+                                    <select id="new-emp-shift" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm font-medium">
+                                        <option value="Shift Pagi (08:00 - 16:00)">Shift Pagi (08:00 - 16:00)</option>
+                                        <option value="Shift Siang (14:00 - 22:00)">Shift Siang (14:00 - 22:00)</option>
+                                        <option value="Shift Malam (22:00 - 06:00)">Shift Malam (22:00 - 06:00)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-2 pt-2">
+                                <button onclick="document.getElementById('add-employee-card').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm font-medium text-gray-600">Batal</button>
+                                <button onclick="saveNewEmployee()" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-xl text-sm font-semibold">Simpan Pegawai</button>
+                            </div>
+                        </div>
+
+                        <!-- Tabel Daftar Pegawai -->
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead class="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
+                                    <tr>
+                                        <th class="p-4">ID / Nama Pegawai</th>
+                                        <th class="p-4">Role Akses</th>
+                                        <th class="p-4">Shift Kerja</th>
+                                        <th class="p-4">Status Akun</th>
+                                        <th class="p-4 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100" id="employee-table-body">
+                                    ${employees.map(e => `
+                                        <tr>
+                                            <td class="p-4 font-semibold text-gray-800">${e.name}<div class="text-xs text-gray-400 font-normal">${e.id}</div></td>
+                                            <td class="p-4"><span class="px-2.5 py-1 bg-amber-50 text-amber-800 rounded-full text-xs font-semibold">${e.role}</span></td>
+                                            <td class="p-4 text-gray-600 font-medium">${e.shift}</td>
+                                            <td class="p-4"><span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">${e.status}</span></td>
+                                            <td class="p-4 text-center space-x-2">
+                                                <button onclick="showToast('Edit data ${e.name}', 'info')" class="text-blue-600 p-1.5 hover:bg-blue-50 rounded"><i class="fa-solid fa-pen-to-square"></i></button>
+                                                <button onclick="removeEmployee('${e.id}')" class="text-red-600 p-1.5 hover:bg-red-50 rounded"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'admin-presensi' || id === 'admin-inventaris' || id === 'admin-reservasi' || id === 'admin-laporan') {
+                if (id === 'admin-presensi') {
+                    c.innerHTML = `
+                        <div class="space-y-6">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Monitoring Presensi & Rekap Bulanan</h1>
+                                <p class="text-sm text-gray-500">Pantau kehadiran harian, jam masuk/pulang, dan kalkulasi jam kerja otomatis.</p>
+                            </div>
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                                        <tr><th class="p-4">Karyawan & Shift</th><th class="p-4">Jam Masuk</th><th class="p-4">Jam Pulang</th><th class="p-4">Total Jam</th><th class="p-4">Status</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        ${employees.map(e => `
+                                            <tr>
+                                                <td class="p-4 font-semibold text-gray-800">${e.name}<div class="text-xs text-gray-400 font-normal">${e.role}</div></td>
+                                                <td class="p-4 text-emerald-600 font-medium">${e.name === currentUserData.name ? attendanceState.clockIn : '08:00 WIB'}</td>
+                                                <td class="p-4 text-gray-600 font-medium">${e.name === currentUserData.name ? attendanceState.clockOut : '16:00 WIB'}</td>
+                                                <td class="p-4 font-bold text-amber-700">7 Jam</td>
+                                                <td class="p-4"><span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">Hadir Tepat Waktu</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else if (id === 'admin-inventaris') {
+                    c.innerHTML = `
+                        <div class="space-y-6">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Monitoring Inventaris Bahan Baku</h1>
+                                <p class="text-sm text-gray-500">Pengawasan stok bahan baku harian.</p>
+                            </div>
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                                        <tr><th class="p-4">Bahan Baku</th><th class="p-4">Stok</th><th class="p-4">Minimum</th><th class="p-4">Supplier</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        ${ingredients.map(i => `
+                                            <tr>
+                                                <td class="p-4 font-semibold">${i.name}</td>
+                                                <td class="p-4 font-bold ${i.stock < i.min ? 'text-red-600' : 'text-gray-800'}">${i.stock} ${i.unit}</td>
+                                                <td class="p-4 text-gray-500">${i.min} ${i.unit}</td>
+                                                <td class="p-4 text-gray-600">${i.supplier}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else if (id === 'admin-reservasi') {
+                    c.innerHTML = `
+                        <div class="space-y-6">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Monitoring Reservasi Tempat Online</h1>
+                                <p class="text-sm text-gray-500">Daftar booking meja dan status kedatangan pelanggan.</p>
+                            </div>
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                                        <tr><th class="p-4">Kode</th><th class="p-4">Pemesan</th><th class="p-4">Jadwal</th><th class="p-4">Meja</th><th class="p-4">Status</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        ${reservations.map(r => `
+                                            <tr>
+                                                <td class="p-4 font-bold text-amber-700">${r.code}</td>
+                                                <td class="p-4 font-semibold">${r.name}<div class="text-xs text-gray-400">${r.phone}</div></td>
+                                                <td class="p-4 text-gray-600">${r.date} — ${r.time} WIB</td>
+                                                <td class="p-4">${r.table} (${r.pax} Orang)</td>
+                                                <td class="p-4"><span class="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-semibold">${r.status}</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else if (id === 'admin-laporan') {
+                    c.innerHTML = `
+                        <div class="space-y-6">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Laporan Operasional Lengkap</h1>
+                                <p class="text-sm text-gray-500">Unduh laporan dalam format PDF dan Excel.</p>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-white p-6 rounded-2xl border border-gray-200 space-y-4">
+                                    <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2"><i class="fa-solid fa-file-pdf text-red-600"></i> Laporan Penjualan & Keuangan</h3>
+                                    <button onclick="showToast('Laporan PDF berhasil diunduh', 'success')" class="bg-gray-900 text-white px-4 py-2.5 rounded-xl text-sm font-medium">Unduh PDF</button>
+                                </div>
+                                <div class="bg-white p-6 rounded-2xl border border-gray-200 space-y-4">
+                                    <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2"><i class="fa-solid fa-file-excel text-emerald-600"></i> Rekap Bahan Baku & Stok</h3>
+                                    <button onclick="showToast('Rekap Excel berhasil diunduh', 'success')" class="bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium">Unduh Excel</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            else if (id === 'kasir-transaksi') {
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Manajemen Transaksi & Pembayaran</h1>
+                            <p class="text-sm text-gray-500">Konfirmasi pembayaran pelanggan dan cetak struk.</p>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b font-semibold text-sm text-gray-700">Daftar Pesanan Belum Bayar</div>
+                            <div class="divide-y" id="cashier-order-list">
+                                ${orders.length === 0 ? '<div class="p-6 text-center text-gray-400 text-sm">Tidak ada transaksi aktif saat ini.</div>' : orders.map(o => `
+                                    <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-bold text-gray-800">${o.id}</span>
+                                                <span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded">${o.table}</span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-1">${o.customer} — ${o.items}</p>
+                                            <p class="text-sm font-bold text-amber-700 mt-1">Rp ${o.total.toLocaleString()}</p>
+                                        </div>
+                                        <div class="space-x-2">
+                                            <button onclick="payOrder('${o.id}')" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">Konfirmasi Bayar</button>
+                                            <button onclick="cancelOrder('${o.id}')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-sm font-semibold">Batalkan</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'kasir-booking') {
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Konfirmasi Booking Pelanggan</h1>
+                            <p class="text-sm text-gray-500">Setujui reservasi tempat dan ubah status kedatangan.</p>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                                    <tr><th class="p-4">Kode</th><th class="p-4">Nama Pemesan</th><th class="p-4">Jadwal</th><th class="p-4">Meja</th><th class="p-4 text-center">Aksi</th></tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    ${reservations.map(r => `
+                                        <tr>
+                                            <td class="p-4 font-bold text-amber-700">${r.code}</td>
+                                            <td class="p-4 font-semibold">${r.name}<div class="text-xs text-gray-400">${r.phone}</div></td>
+                                            <td class="p-4 text-gray-600">${r.date} (${r.time} WIB)</td>
+                                            <td class="p-4">${r.table}</td>
+                                            <td class="p-4 text-center space-x-2">
+                                                <button onclick="updateReservationStatus('${r.code}', 'Checked-in')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">Check-in</button>
+                                                <button onclick="updateReservationStatus('${r.code}', 'Cancelled')" class="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold">Batalkan</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'pelayan-pesanan') {
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Buat Pesanan Pelanggan (Waiter)</h1>
+                            <p class="text-sm text-gray-500">Pilih menu, tentukan meja, dan kirim pesanan otomatis ke dapur.</p>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                ${menus.map(m => `
+                                    <div class="bg-white p-4 rounded-2xl border border-gray-200 flex items-center gap-4">
+                                        <img src="${m.img}" class="w-16 h-16 rounded-xl object-cover">
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-gray-800 text-sm">${m.name}</h4>
+                                            <p class="text-xs text-amber-700 font-semibold mt-1">Rp ${m.price.toLocaleString()}</p>
+                                            <button onclick="addToCart(${m.id})" class="mt-2 bg-amber-50 hover:bg-amber-100 text-amber-800 px-3 py-1.5 rounded-xl text-xs font-semibold">Tambah</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl border border-gray-200 flex flex-col justify-between">
+                                <div class="space-y-4">
+                                    <h3 class="font-bold text-gray-800 text-lg">Keranjang Meja</h3>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nomor Meja</label>
+                                        <select id="order-table" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium">
+                                            <option>Meja 01 (Indoor)</option>
+                                            <option>Meja 03 (Outdoor)</option>
+                                            <option>VIP Room</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nama Pelanggan</label>
+                                        <input type="text" id="order-customer" placeholder="Nama Pemesan" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-sm">
+                                    </div>
+                                    <div class="space-y-2 border-t border-b py-3 text-sm" id="cart-items-container">
+                                        ${activeCart.length === 0 ? '<p class="text-xs text-gray-400 text-center">Keranjang kosong</p>' : activeCart.map((item, idx) => `
+                                            <div class="flex justify-between items-center">
+                                                <span>${item.qty}x ${item.name}</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-semibold">Rp ${(item.price * item.qty).toLocaleString()}</span>
+                                                    <button onclick="removeFromCart(${idx})" class="text-red-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <div class="flex justify-between font-bold text-base">
+                                        <span>Total</span>
+                                        <span class="text-amber-700" id="cart-total">Rp ${activeCart.reduce((sum, i) => sum + (i.price * i.qty), 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                <button onclick="submitOrder()" class="mt-6 w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-semibold shadow-sm">Kirim ke Dapur</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'pelayan-monitoring') {
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Monitoring Status Pesanan Meja</h1>
+                            <p class="text-sm text-gray-500">Pantau pesanan menunggu, diproses, dan siap saji.</p>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                                    <tr><th class="p-4">ID</th><th class="p-4">Meja</th><th class="p-4">Menu</th><th class="p-4">Status Dapur</th><th class="p-4 text-center">Aksi</th></tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    ${orders.map(o => `
+                                        <tr>
+                                            <td class="p-4 font-bold">${o.id}</td>
+                                            <td class="p-4 font-semibold">${o.table}<div class="text-xs text-gray-400">${o.customer}</div></td>
+                                            <td class="p-4 text-gray-600">${o.items}</td>
+                                            <td class="p-4"><span class="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-semibold">${o.status}</span></td>
+                                            <td class="p-4 text-center space-x-2">
+                                                ${o.status === 'Siap Saji' ? `<button onclick="markServed('${o.id}')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">Tandai Disajikan</button>` : '<span class="text-xs text-gray-400">Dalam Proses</span>'}
+                                                <button onclick="cancelOrder('${o.id}')" class="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold">Batal</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'dapur-pesanan') {
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Pesanan Masuk Dapur</h1>
+                            <p class="text-sm text-gray-500">Terima pesanan dan ubah status pembuatan menu.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Menunggu -->
+                            <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4">
+                                <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2"><i class="fa-solid fa-clock text-amber-600"></i> Menunggu Dapur</h3>
+                                <div class="space-y-3">
+                                    ${orders.filter(o => o.status === 'Menunggu').length === 0 ? '<p class="text-xs text-gray-400">Tidak ada pesanan menunggu.</p>' : orders.filter(o => o.status === 'Menunggu').map(o => `
+                                        <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2">
+                                            <div class="flex justify-between text-xs font-semibold text-gray-500"><span>${o.id}</span><span>${o.time}</span></div>
+                                            <div class="font-bold text-gray-800">${o.table} (${o.customer})</div>
+                                            <p class="text-xs text-gray-600">${o.items}</p>
+                                            <button onclick="updateOrderStatus('${o.id}', 'Diproses')" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-xs font-semibold">Mulai Diproses</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <!-- Sedang Diproses -->
+                            <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4">
+                                <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2"><i class="fa-solid fa-fire text-blue-600"></i> Sedang Diproses</h3>
+                                <div class="space-y-3">
+                                    ${orders.filter(o => o.status === 'Diproses').length === 0 ? '<p class="text-xs text-gray-400">Tidak ada pesanan diproses.</p>' : orders.filter(o => o.status === 'Diproses').map(o => `
+                                        <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl space-y-2">
+                                            <div class="flex justify-between text-xs font-semibold text-gray-500"><span>${o.id}</span><span>${o.time}</span></div>
+                                            <div class="font-bold text-gray-800">${o.table} (${o.customer})</div>
+                                            <p class="text-xs text-gray-600">${o.items}</p>
+                                            <button onclick="updateOrderStatus('${o.id}', 'Siap Saji')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-semibold">Tandai Siap Saji</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <!-- Siap Saji -->
+                            <div class="bg-white p-5 rounded-2xl border border-gray-200 space-y-4">
+                                <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Siap Saji</h3>
+                                <div class="space-y-3">
+                                    ${orders.filter(o => o.status === 'Siap Saji').length === 0 ? '<p class="text-xs text-gray-400">Tidak ada pesanan siap saji.</p>' : orders.filter(o => o.status === 'Siap Saji').map(o => `
+                                        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl space-y-2">
+                                            <div class="flex justify-between text-xs font-semibold text-gray-500"><span>${o.id}</span><span>${o.time}</span></div>
+                                            <div class="font-bold text-gray-800">${o.table} (${o.customer})</div>
+                                            <p class="text-xs text-gray-600">${o.items}</p>
+                                            <div class="text-center text-xs font-semibold text-emerald-700 py-2">Selesai Dibuat</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'dapur-bahan' || id === 'dapur-supplier') {
+                if (id === 'dapur-bahan') {
+                    c.innerHTML = `
+                        <div class="space-y-6">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Manajemen Bahan Baku & Stok Dapur</h1>
+                                <p class="text-sm text-gray-500">Pencatatan stok masuk, stok keluar, dan batas minimum.</p>
+                            </div>
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                                        <tr><th class="p-4">Bahan Baku</th><th class="p-4">Stok Saat Ini</th><th class="p-4">Batas Min</th><th class="p-4">Supplier</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        ${ingredients.map(i => `
+                                            <tr>
+                                                <td class="p-4 font-semibold">${i.name} <div class="text-xs text-gray-400">${i.code}</div></td>
+                                                <td class="p-4 font-bold ${i.stock < i.min ? 'text-red-600' : 'text-gray-800'}">${i.stock} ${i.unit}</td>
+                                                <td class="p-4 text-gray-500">${i.min} ${i.unit}</td>
+                                                <td class="p-4 text-gray-600">${i.supplier}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    c.innerHTML = `
+                        <div class="space-y-6">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Data Supplier & Pemesanan Bahan</h1>
+                                <p class="text-sm text-gray-500">Kelola daftar mitra supplier Warung Copas.</p>
+                            </div>
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                                        <tr><th class="p-4">Supplier</th><th class="p-4">Komoditas</th><th class="p-4">WhatsApp</th><th class="p-4 text-center">Aksi</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        <tr><td class="p-4 font-semibold">PT Kopi Nusantara</td><td class="p-4 text-gray-600">Biji Kopi Robusta</td><td class="p-4 text-emerald-600">081122334455</td><td class="p-4 text-center"><button onclick="showToast('Pesan bahan ke PT Kopi Nusantara terkirim', 'success')" class="bg-amber-50 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-semibold">Pesan Bahan</button></td></tr>
+                                        <tr><td class="p-4 font-semibold">CV Susu Murni</td><td class="p-4 text-gray-600">Susu UHT Full Cream</td><td class="p-4 text-emerald-600">082233445566</td><td class="p-4 text-center"><button onclick="showToast('Pesan bahan ke CV Susu Murni terkirim', 'success')" class="bg-amber-50 text-amber-800 px-3 py-1.5 rounded-lg text-xs font-semibold">Pesan Bahan</button></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            else if (id === 'shared-presensi') {
+                c.innerHTML = `
+                    <div class="space-y-6 max-w-xl">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Presensi Karyawan</h1>
+                            <p class="text-sm text-gray-500">Catat kehadiran masuk dan pulang shift Anda.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 space-y-6">
+                            <div class="bg-gray-50 p-4 rounded-xl border flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs text-gray-400 uppercase font-semibold">Status Kehadiran</p>
+                                    <h3 id="att-text" class="text-lg font-bold text-amber-700 mt-0.5">${attendanceState.status}</h3>
+                                </div>
+                                <div class="text-right text-xs text-gray-500">
+                                    <div>Masuk: <span id="att-in" class="font-semibold text-gray-800">${attendanceState.clockIn}</span></div>
+                                    <div class="mt-1">Pulang: <span id="att-out" class="font-semibold text-gray-800">${attendanceState.clockOut}</span></div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button onclick="doClockIn()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3.5 rounded-xl">Presensi Masuk</button>
+                                <button onclick="doClockOut()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3.5 rounded-xl">Presensi Pulang</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'pelanggan-home') {
+                c.innerHTML = `
+                    <div class="space-y-8">
+                        <div class="bg-gradient-to-r from-copas-900 to-amber-900 rounded-3xl p-8 text-white shadow-xl">
+                            <div class="max-w-xl space-y-4">
+                                <span class="px-3 py-1 bg-amber-500/30 text-amber-200 rounded-full text-xs font-semibold">Warung Copas Publik</span>
+                                <h1 class="text-3xl font-extrabold">Kopi Nikmat, Tempat Nyaman, Harga Bersahabat</h1>
+                                <p class="text-amber-100 text-sm">Nikmati suasana santai Warung Copas dan lakukan reservasi tempat secara online.</p>
+                                <button onclick="switchTab('pelanggan-booking')" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg">Booking Meja Online</button>
+                            </div>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Daftar Menu Warung Copas</h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                ${menus.map(m => `
+                                    <div class="bg-white rounded-2xl border overflow-hidden flex flex-col">
+                                        <img src="${m.img}" class="w-full h-40 object-cover">
+                                        <div class="p-4 flex-1 flex flex-col justify-between">
+                                            <div>
+                                                <span class="text-xs font-semibold text-amber-600">${m.cat}</span>
+                                                <h3 class="font-bold text-gray-800 mt-1">${m.name}</h3>
+                                            </div>
+                                            <div class="mt-4 flex items-center justify-between">
+                                                <span class="font-extrabold text-amber-700">Rp ${m.price.toLocaleString()}</span>
+                                                <button onclick="switchTab('pelanggan-booking')" class="bg-amber-50 text-amber-800 px-3 py-1.5 rounded-xl text-xs font-semibold">Booking</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'pelanggan-booking') {
+                c.innerHTML = `
+                    <div class="space-y-6 max-w-2xl mx-auto">
+                        <div class="text-center">
+                            <h1 class="text-2xl font-bold text-gray-900">Booking Tempat Online</h1>
+                            <p class="text-sm text-gray-500">Pesan meja Anda di Warung Copas tanpa repot mengantre.</p>
+                        </div>
+                        <div class="bg-white p-8 rounded-2xl border shadow-xl space-y-5">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nama Lengkap</label>
+                                    <input type="text" id="b-name" placeholder="Cth. Dimas" class="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nomor WhatsApp</label>
+                                    <input type="text" id="b-phone" placeholder="Cth. 08123456789" class="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tanggal</label>
+                                    <input type="date" id="b-date" class="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Jam</label>
+                                    <input type="time" id="b-time" class="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Pengunjung</label>
+                                    <select id="b-pax" class="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm"><option value="2">2 Orang</option><option value="4">4 Orang</option><option value="6">6 Orang</option></select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Pilihan Meja / Area</label>
+                                <select id="b-table" class="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm"><option>Area Indoor AC</option><option>Area Outdoor Smoking</option><option>VIP Room</option></select>
+                            </div>
+                            <button onclick="submitBookingCustomer()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3.5 rounded-xl shadow-lg">Kirim Permintaan Booking</button>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (id === 'pelanggan-status') {
+                c.innerHTML = `
+                    <div class="space-y-6 max-w-xl mx-auto">
+                        <div class="text-center">
+                            <h1 class="text-2xl font-bold text-gray-900">Cek Status Reservasi</h1>
+                            <p class="text-sm text-gray-500">Masukkan kode booking untuk melihat status meja Anda.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border shadow-xl space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Kode Booking</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="chk-code" placeholder="Cth. COP-8821" class="flex-1 bg-gray-50 border rounded-xl px-4 py-3 text-sm font-bold uppercase">
+                                    <button onclick="checkBooking()" class="bg-amber-600 text-white px-5 py-3 rounded-xl font-semibold text-sm">Cek</button>
+                                </div>
+                            </div>
+                            <div id="chk-result" class="hidden bg-emerald-50 border border-emerald-200 p-4 rounded-xl space-y-2 mt-4">
+                                <div class="flex justify-between items-center"><span id="res-status-badge" class="font-bold text-emerald-800 text-sm">Status: Confirmed</span></div>
+                                <p class="text-xs text-gray-700">Pemesan: <b id="res-name" class="text-gray-900">-</b></p>
+                                <p class="text-xs text-gray-700">Meja: <b id="res-table" class="text-gray-900">-</b></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // --- FUNGSI INTERAKTIF & MODUL LOGIC ---
+
+        function initAdminChart() {
+            const ctx = document.getElementById('adminSalesChart');
+            if (!ctx) return;
+            if (salesChartInstance) salesChartInstance.destroy();
+            salesChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+                    datasets: [{
+                        label: 'Penjualan (Rp)',
+                        data: [1200000, 1450000, 1300000, 1700000, 2100000, 2900000, 2450000],
+                        borderColor: '#d97706',
+                        backgroundColor: 'rgba(217, 119, 6, 0.08)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.35
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // 1. Manajemen Menu (Admin)
+        function openMenuModal(id = null) {
+            const isEdit = id !== null;
+            const menu = isEdit ? menus.find(m => m.id === id) : { name: '', cat: 'Minuman', price: 0 };
+            
+            const modal = document.getElementById('global-modal');
+            const box = document.getElementById('modal-box');
+            box.innerHTML = `
+                <h3 class="font-bold text-lg text-gray-800">${isEdit ? 'Edit Menu' : 'Tambah Menu Baru'}</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nama Menu</label>
+                        <input type="text" id="m-name" value="${menu.name}" class="w-full bg-gray-50 border rounded-xl px-3 py-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Kategori</label>
+                        <select id="m-cat" class="w-full bg-gray-50 border rounded-xl px-3 py-2 text-sm">
+                            <option ${menu.cat === 'Minuman' ? 'selected' : ''}>Minuman</option>
+                            <option ${menu.cat === 'Makanan' ? 'selected' : ''}>Makanan</option>
+                            <option ${menu.cat === 'Snack' ? 'selected' : ''}>Snack</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Harga (Rp)</label>
+                        <input type="number" id="m-price" value="${menu.price}" class="w-full bg-gray-50 border rounded-xl px-3 py-2 text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Batal</button>
+                    <button onclick="saveMenu(${isEdit ? id : 'null'})" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">Simpan</button>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function saveMenu(id) {
+            const name = document.getElementById('m-name').value;
+            const cat = document.getElementById('m-cat').value;
+            const price = parseInt(document.getElementById('m-price').value);
+
+            if (!name || isNaN(price)) {
+                showToast('Mohon isi nama dan harga dengan benar.', 'error');
+                return;
+            }
+
+            if (id === null) {
+                const newId = menus.length > 0 ? Math.max(...menus.map(m => m.id)) + 1 : 1;
+                menus.push({ id: newId, name, cat, price, stock: 'Aman', img: 'https://placehold.co/100x100/d97706/ffffff?text=Menu' });
+                showToast('Menu baru berhasil ditambahkan.', 'success');
+            } else {
+                const m = menus.find(x => x.id === id);
+                if (m) {
+                    m.name = name;
+                    m.cat = cat;
+                    m.price = price;
+                    showToast('Menu berhasil diperbarui.', 'success');
+                }
+            }
+            document.getElementById('global-modal').classList.add('hidden');
+            renderContent('admin-menu');
+        }
+
+        function deleteMenu(id) {
+            menus = menus.filter(m => m.id !== id);
+            showToast('Menu berhasil dihapus.', 'success');
+            renderContent('admin-menu');
+        }
+
+        // 2. Manajemen Pegawai (Admin)
+        function openAddEmployeeModal() {
+            document.getElementById('add-employee-card').classList.toggle('hidden');
+        }
+
+        function saveNewEmployee() {
+            const name = document.getElementById('new-emp-name').value;
+            const role = document.getElementById('new-emp-role').value;
+            const shift = document.getElementById('new-emp-shift').value;
+
+            if (!name) {
+                showToast('Mohon masukkan nama lengkap pegawai.', 'error');
+                return;
+            }
+
+            const newId = 'EMP-0' + (employees.length + 1);
+            employees.push({ id: newId, name, role, shift, status: 'Aktif' });
+            document.getElementById('add-employee-card').classList.add('hidden');
+            renderContent('admin-users');
+            showToast(`Pegawai ${name} berhasil didaftarkan.`, 'success');
+        }
+
+        function removeEmployee(id) {
+            employees = employees.filter(e => e.id !== id);
+            renderContent('admin-users');
+            showToast('Data pegawai dihapus.', 'success');
+        }
+
+        // 3. Modul Pemesanan (Pelayan) & Keranjang
+        function addToCart(menuId) {
+            const menu = menus.find(m => m.id === menuId);
+            const exist = activeCart.find(i => i.id === menuId);
+            if (exist) {
+                exist.qty++;
+            } else {
+                activeCart.push({ id: menu.id, name: menu.name, price: menu.price, qty: 1 });
+            }
+            renderContent('pelayan-pesanan');
+            showToast(`${menu.name} ditambahkan ke keranjang.`, 'success');
+        }
+
+        function removeFromCart(idx) {
+            activeCart.splice(idx, 1);
+            renderContent('pelayan-pesanan');
+        }
+
+        function submitOrder() {
+            if (activeCart.length === 0) {
+                showToast('Keranjang pesanan masih kosong.', 'error');
+                return;
+            }
+            const table = document.getElementById('order-table').value;
+            const customer = document.getElementById('order-customer').value || 'Pelanggan Umum';
+            const total = activeCart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+            const itemsStr = activeCart.map(i => `${i.qty}x ${i.name}`).join(', ');
+
+            const newOrd = {
+                id: 'ORD-00' + (orders.length + 1),
+                table,
+                customer,
+                items: itemsStr,
+                total,
+                status: 'Menunggu',
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+            };
+
+            orders.push(newOrd);
+            activeCart = [];
+            showToast('Pesanan berhasil dikirim ke Dapur!', 'success');
+            switchTab('pelayan-monitoring');
+        }
+
+        // 4. Pembatalan & Pemrosesan Status Pesanan (Kasir / Dapur / Pelayan)
+        function updateOrderStatus(orderId, newStatus) {
+            const ord = orders.find(o => o.id === orderId);
+            if (ord) {
+                ord.status = newStatus;
+                showToast(`Status pesanan ${orderId} diubah menjadi ${newStatus}`, 'success');
+                if (currentRole === 'dapur') renderContent('dapur-pesanan');
+                else if (currentRole === 'pelayan') renderContent('pelayan-monitoring');
+            }
+        }
+
+        function markServed(orderId) {
+            updateOrderStatus(orderId, 'Selesai');
+        }
+
+        function cancelOrder(orderId) {
+            orders = orders.filter(o => o.id !== orderId);
+            showToast(`Pesanan ${orderId} telah dibatalkan.`, 'error');
+            if (currentRole === 'kasir') renderContent('kasir-transaksi');
+            else if (currentRole === 'pelayan') renderContent('pelayan-monitoring');
+        }
+
+        function payOrder(orderId) {
+            const ord = orders.find(o => o.id === orderId);
+            if (ord) {
+                ord.status = 'Selesai';
+                orders = orders.filter(o => o.id !== orderId); // Selesaikan transaksi dari antrean bayar
+                showToast(`Pembayaran ${orderId} lunas! Struk tercetak.`, 'success');
+                renderContent('kasir-transaksi');
+            }
+        }
+
+        // 5. Konfirmasi & Pembatalan Booking (Kasir)
+        function updateReservationStatus(code, status) {
+            const res = reservations.find(r => r.code === code);
+            if (res) {
+                res.status = status;
+                showToast(`Reservasi ${code} diperbarui menjadi ${status}`, status === 'Cancelled' ? 'error' : 'success');
+                renderContent('kasir-booking');
+            }
+        }
+
+        // 6. Presensi Mandiri Karyawan
+        function doClockIn() {
+            const t = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+            attendanceState.status = 'Hadir (Bertugas)';
+            attendanceState.clockIn = t;
+            if(document.getElementById('att-text')) {
+                document.getElementById('att-text').innerText = attendanceState.status;
+                document.getElementById('att-in').innerText = t;
+            }
+            showToast(`Presensi masuk tercatat pada ${t}`, 'success');
+        }
+
+        function doClockOut() {
+            const t = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+            attendanceState.status = 'Selesai Shift';
+            attendanceState.clockOut = t;
+            if(document.getElementById('att-text')) {
+                document.getElementById('att-text').innerText = attendanceState.status;
+                document.getElementById('att-out').innerText = t;
+            }
+            showToast(`Presensi pulang tercatat pada ${t}`, 'success');
+        }
+
+        // 7. Booking Online Pelanggan & Cek Status
+        function submitBookingCustomer() {
+            const name = document.getElementById('b-name').value;
+            const phone = document.getElementById('b-phone').value;
+            const date = document.getElementById('b-date').value || '2026-06-06';
+            const time = document.getElementById('b-time').value || '19:00';
+            const pax = document.getElementById('b-pax').value;
+            const table = document.getElementById('b-table').value;
+
+            if (!name || !phone) {
+                showToast('Mohon lengkapi nama dan nomor WhatsApp.', 'error');
+                return;
+            }
+
+            const randCode = 'COP-' + Math.floor(1000 + Math.random() * 9000);
+            reservations.push({ code: randCode, name, date, time, pax, table, status: 'Pending', phone });
+            showToast(`Booking berhasil! Kode reservasi Anda: ${randCode}`, 'success');
+            switchTab('pelanggan-status');
+        }
+
+        function checkBooking() {
+            const code = document.getElementById('chk-code').value.trim().toUpperCase();
+            const res = reservations.find(r => r.code === code);
+            const resBox = document.getElementById('chk-result');
+            if (res) {
+                document.getElementById('res-status-badge').innerText = `Status: ${res.status}`;
+                document.getElementById('res-name').innerText = res.name;
+                document.getElementById('res-table').innerText = `${res.table} (${res.pax} Orang - ${res.date} ${res.time} WIB)`;
+                resBox.classList.remove('hidden');
+                showToast('Data reservasi ditemukan.', 'success');
+            } else {
+                resBox.classList.add('hidden');
+                showToast('Kode booking tidak ditemukan.', 'error');
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            const m = document.getElementById('toast-msg');
+            const bg = document.getElementById('toast-bg');
+            const icon = document.getElementById('toast-icon');
+
+            m.innerText = msg;
+            if (type === 'success') {
+                bg.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-white font-medium bg-emerald-600 border-emerald-700';
+                icon.className = 'fa-solid fa-circle-check text-xl';
+            } else if (type === 'error') {
+                bg.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-white font-medium bg-red-600 border-red-700';
+                icon.className = 'fa-solid fa-triangle-exclamation text-xl';
+            } else {
+                bg.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border text-white font-medium bg-amber-600 border-amber-700';
+                icon.className = 'fa-solid fa-circle-info text-xl';
+            }
+
+            t.classList.remove('translate-y-20', 'opacity-0');
+            t.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                t.classList.remove('translate-y-0', 'opacity-100');
+                t.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+    </script>
 </body>
 </html>
