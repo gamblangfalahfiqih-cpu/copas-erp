@@ -284,11 +284,31 @@ function selectBookingType(code, type, amount) {
             <div class="grid grid-cols-3 gap-2">
                 <button onclick="finalizeBookingPayment('${code}', '${type}', 'Tunai', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">💵 Tunai</button>
                 <button onclick="selectBookingQRIS('${code}', '${type}', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">📱 QRIS</button>
-                <button onclick="finalizeBookingPayment('${code}', '${type}', 'Transfer Bank', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">💳 Transfer</button>
+                <button onclick="selectBookingTransfer('${code}', '${type}', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">💳 Transfer</button>
             </div>
             <div id="booking-qris-area"></div>
+            <div id="booking-transfer-area"></div>
         </div>
     `;
+}
+
+// Tambahkan fungsi khusus untuk menampilkan info transfer rekening bank
+function selectBookingTransfer(code, type, amount) {
+    const qrisArea = document.getElementById('booking-qris-area');
+    const transferArea = document.getElementById('booking-transfer-area');
+    
+    if (qrisArea) qrisArea.innerHTML = ''; // Bersihkan QRIS jika ada
+    
+    if (transferArea) {
+        transferArea.innerHTML = `
+            <div class="mt-3 space-y-3 text-left bg-gray-50 p-3 rounded-xl border text-xs">
+                <p class="font-bold text-gray-700">Silakan Transfer ke Rekening Warung Copas:</p>
+                <p>Bank BCA: <b class="text-amber-700">1234-5678-90</b> (a.n. Warung Copas)</p>
+                <p class="text-gray-500">Jumlah Transfer: <b>Rp ${amount.toLocaleString()}</b></p>
+                <button onclick="finalizeBookingPayment('${code}', '${type}', 'Transfer Bank', ${amount})" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm mt-2">Konfirmasi Mutasi Masuk</button>
+            </div>
+        `;
+    }
 }
 
 // Fungsi untuk memunculkan Barcode QRIS khusus Booking
