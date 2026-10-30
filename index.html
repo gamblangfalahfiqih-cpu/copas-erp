@@ -187,6 +187,84 @@
             document.getElementById('login-user-input').value = roleDetails[role].name;
         }
 
+        // Membuka Modal Pembayaran untuk Reservasi / Booking
+function openBookingPaymentModal(code) {
+    const res = reservations.find(r => r.code === code);
+    if (!res) return;
+
+    // Estimasi biaya minimum booking / minimum order meja
+    const defaultBookingFee = 50000; 
+
+    const modal = document.getElementById('global-modal');
+    const box = document.getElementById('modal-box');
+
+    box.innerHTML = `
+        <div class="text-center space-y-4">
+            <h3 class="font-bold text-lg text-gray-800">Pembayaran / DP Reservasi Meja</h3>
+            <p class="text-sm text-gray-500">Kode Booking: <b>${res.code}</b> (${res.name})</p>
+            <div class="text-2xl font-extrabold text-amber-700">Rp ${defaultBookingFee.toLocaleString()}</div>
+            
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="selectBookingPaymentMethod('${res.code}', 'Tunai', ${defaultBookingFee})" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">💵 Tunai</button>
+                <button onclick="selectBookingPaymentMethod('${res.code}', 'QRIS', ${defaultBookingFee})" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">📱 QRIS</button>
+                <button onclick="selectBookingPaymentMethod('${res.code}', 'Transfer', ${defaultBookingFee})" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">💳 Transfer</button>
+            </div>
+
+            <div id="booking-payment-action" class="mt-4 pt-4 border-t hidden">
+                <!-- Area Dinamis Pembayaran Booking -->
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+                <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
+            </div>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+}
+
+function selectBookingPaymentMethod(code, method, fee) {
+    const actionArea = document.getElementById('booking-payment-action');
+    actionArea.classList.remove('hidden');
+
+    if (method === 'Tunai') {
+        actionArea.innerHTML = `
+            <div class="space-y-3 text-left">
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Uang Tunai Diterima</label>
+                <input type="number" id="booking-cash" placeholder="Cth. 50000" class="w-full bg-gray-50 border rounded-xl px-3 py-2 text-sm">
+                <button onclick="finalizeBookingPayment('${code}', 'Tunai')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Konfirmasi Lunas</button>
+            </div>
+        `;
+    } else if (method === 'QRIS') {
+        actionArea.innerHTML = `
+            <div class="space-y-3 flex flex-col items-center">
+                <p class="text-xs font-semibold text-gray-600">Scan Barcode QRIS untuk Pembayaran Booking:</p>
+                <div class="bg-white p-3 border-2 border-dashed border-amber-500 rounded-2xl inline-block shadow-xs">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COPAS-BOOKING-${code}" alt="QRIS Booking" class="w-36 h-36 mx-auto">
+                </div>
+                <button onclick="finalizeBookingPayment('${code}', 'QRIS')" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Konfirmasi Scan QRIS Sukses</button>
+            </div>
+        `;
+    } else if (method === 'Transfer') {
+        actionArea.innerHTML = `
+            <div class="space-y-3 text-left bg-gray-50 p-3 rounded-xl border text-xs">
+                <p class="font-bold text-gray-700">Transfer ke Rekening Resmi:</p>
+                <p>Bank BCA: <b class="text-amber-700">1234-5678-90</b> (a.n. Warung Copas)</p>
+                <button onclick="finalizeBookingPayment('${code}', 'Transfer Bank')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm mt-2">Konfirmasi Mutasi Masuk</button>
+            </div>
+        `;
+    }
+}
+
+function finalizeBookingPayment(code, method) {
+    const res = reservations.find(r => r.code === code);
+    if (res) {
+        res.status = 'Confirmed (Paid)';
+    }
+    document.getElementById('global-modal').classList.add('hidden');
+    showToast(`Pembayaran reservasi ${code} via ${method} berhasil dikonfirmasi!`, 'success');
+    renderContent('kasir-booking');
+}
+
         function handleLogin() {
             const selector = document.getElementById('role-selector');
             currentRole = selector.value;
@@ -598,36 +676,69 @@
     `;
 }
             else if (id === 'kasir-booking') {
-                c.innerHTML = `
-                    <div class="space-y-6">
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-900">Konfirmasi Booking Pelanggan</h1>
-                            <p class="text-sm text-gray-500">Setujui reservasi tempat dan ubah status kedatangan.</p>
-                        </div>
-                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
-                                    <tr><th class="p-4">Kode</th><th class="p-4">Nama Pemesan</th><th class="p-4">Jadwal</th><th class="p-4">Meja</th><th class="p-4 text-center">Aksi</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    ${reservations.map(r => `
-                                        <tr>
-                                            <td class="p-4 font-bold text-amber-700">${r.code}</td>
-                                            <td class="p-4 font-semibold">${r.name}<div class="text-xs text-gray-400">${r.phone}</div></td>
-                                            <td class="p-4 text-gray-600">${r.date} (${r.time} WIB)</td>
-                                            <td class="p-4">${r.table}</td>
-                                            <td class="p-4 text-center space-x-2">
-                                                <button onclick="updateReservationStatus('${r.code}', 'Checked-in')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold">Check-in</button>
-                                                <button onclick="updateReservationStatus('${r.code}', 'Cancelled')" class="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold">Batalkan</button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            }
+    c.innerHTML = `
+        <div class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Konfirmasi Booking & Pembayaran DP</h1>
+                    <p class="text-sm text-gray-500">Verifikasi reservasi, lunasi pembayaran meja, dan proses check-in tamu.</p>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl text-xs font-semibold text-amber-800">
+                    <i class="fa-solid fa-calendar-check mr-1"></i> Total Reservasi Aktif: ${reservations.length} Tamu
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                        <tr>
+                            <th class="p-4">Kode & Pemesan</th>
+                            <th class="p-4">Jadwal</th>
+                            <th class="p-4">Meja & Pax</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-center">Aksi Kasir</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        ${reservations.map(r => `
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-4">
+                                    <span class="font-bold text-amber-700">${r.code}</span>
+                                    <div class="font-semibold text-gray-800 mt-0.5">${r.name}</div>
+                                    <div class="text-xs text-gray-400"><i class="fa-brands fa-whatsapp text-emerald-600"></i> ${r.phone}</div>
+                                </td>
+                                <td class="p-4 text-gray-600 font-medium">
+                                    <div>${r.date}</div>
+                                    <div class="text-xs text-amber-600 font-bold"><i class="fa-regular fa-clock"></i> ${r.time} WIB</div>
+                                </td>
+                                <td class="p-4">
+                                    <span class="font-semibold text-gray-800">${r.table}</span>
+                                    <div class="text-xs text-gray-500">${r.pax || '2'} Orang</div>
+                                </td>
+                                <td class="p-4">
+                                    <span class="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-semibold border border-amber-200">
+                                        ${r.status || 'Pending'}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center space-x-1">
+                                    <button onclick="openBookingPaymentModal('${r.code}')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs">
+                                        <i class="fa-solid fa-cash-register"></i> Bayar / DP
+                                    </button>
+                                    <button onclick="updateReservationStatus('${r.code}', 'Checked-in')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs">
+                                        Check-in
+                                    </button>
+                                    <button onclick="updateReservationStatus('${r.code}', 'Cancelled')" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1.5 rounded-xl text-xs font-semibold">
+                                        Batal
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
             else if (id === 'pelayan-pesanan') {
                 c.innerHTML = `
                     <div class="space-y-6">
