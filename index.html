@@ -138,21 +138,21 @@
         let currentUserData = { name: 'Ahmad Administrator', title: 'Pemilik / Admin' };
         let salesChartInstance = null;
 
-        // Dataset Mock Dinamis
-        let menus = [
+        // Dataset dengan localStorage persistence agar data tidak hilang saat refresh
+        let menus = JSON.parse(localStorage.getItem('copas_menus')) || [
             { id: 1, name: 'Kopi Susu Gula Aren', cat: 'Minuman', price: 18000, stock: 'Aman', img: 'https://placehold.co/100x100/f59e0b/ffffff?text=Kopi' },
             { id: 2, name: 'Mie Instan Copas Special', cat: 'Makanan', price: 15000, stock: 'Aman', img: 'https://placehold.co/100x100/ef4444/ffffff?text=Mie' },
             { id: 3, name: 'Roti Bakar Coklat Keju', cat: 'Snack', price: 14000, stock: 'Aman', img: 'https://placehold.co/100x100/10b981/ffffff?text=Roti' },
             { id: 4, name: 'Es Teh Manis Jumbo', cat: 'Minuman', price: 6000, stock: 'Aman', img: 'https://placehold.co/100x100/3b82f6/ffffff?text=Teh' }
         ];
 
-        let orders = [
+        let orders = JSON.parse(localStorage.getItem('copas_orders')) || [
             { id: 'ORD-001', table: 'Meja 03', customer: 'Rian Putra', items: '2x Kopi Susu Aren, 1x Mie Copas', total: 51000, status: 'Siap Saji', time: '10:45 WIB' },
             { id: 'ORD-002', table: 'Meja 05', customer: 'Siti Aminah', items: '1x Roti Bakar, 2x Es Teh', total: 26000, status: 'Diproses', time: '11:02 WIB' },
             { id: 'ORD-003', table: 'VIP 01', customer: 'Yoga Pratama', items: '3x Kopi Susu Aren', total: 54000, status: 'Menunggu', time: '11:15 WIB' }
         ];
 
-        let employees = [
+        let employees = JSON.parse(localStorage.getItem('copas_employees')) || [
             { id: 'EMP-01', name: 'Ahmad Administrator', role: 'Admin', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
             { id: 'EMP-02', name: 'Sinta Kasir', role: 'Kasir', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
             { id: 'EMP-03', name: 'Joko Pelayan', role: 'Pelayan', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
@@ -160,21 +160,31 @@
             { id: 'EMP-05', name: 'Dewi Waiter', role: 'Pelayan', shift: 'Shift Siang (14:00 - 22:00)', status: 'Aktif' }
         ];
 
-        let reservations = [
+        let reservations = JSON.parse(localStorage.getItem('copas_reservations')) || [
             { code: 'COP-8821', name: 'Dimas Anggara', date: '2026-06-06', time: '19:00', pax: 4, table: 'Meja Utama 02', status: 'Confirmed', phone: '081234567890' },
             { code: 'COP-8822', name: 'Rahmat Hidayat', date: '2026-06-06', time: '20:00', pax: 6, table: 'Area Outdoor 04', status: 'Pending', phone: '089876543210' }
         ];
 
-        let ingredients = [
+        let ingredients = JSON.parse(localStorage.getItem('copas_ingredients')) || [
             { code: 'ING-01', name: 'Biji Kopi Robusta', stock: 12, min: 5, unit: 'Kg', supplier: 'PT Kopi Nusantara' },
             { code: 'ING-02', name: 'Susu UHT Full Cream', stock: 3, min: 8, unit: 'Liter', supplier: 'CV Susu Murni' },
             { code: 'ING-03', name: 'Gula Aren Cair', stock: 15, min: 5, unit: 'Liter', supplier: 'UD Manis Jaya' },
             { code: 'ING-04', name: 'Mie Instan Goreng', stock: 45, min: 20, unit: 'Pcs', supplier: 'Toko Berkah' }
         ];
 
+        let attendanceState = JSON.parse(localStorage.getItem('copas_attendance')) || { status: 'Belum Presensi', clockIn: '-', clockOut: '-' };
         let activeCart = [];
-        let attendanceState = { status: 'Belum Presensi', clockIn: '-', clockOut: '-' };
         let activeTab = '';
+
+        // Fungsi Global untuk Menyimpan Perubahan ke LocalStorage
+        function saveData() {
+            localStorage.setItem('copas_menus', JSON.stringify(menus));
+            localStorage.setItem('copas_orders', JSON.stringify(orders));
+            localStorage.setItem('copas_employees', JSON.stringify(employees));
+            localStorage.setItem('copas_reservations', JSON.stringify(reservations));
+            localStorage.setItem('copas_ingredients', JSON.stringify(ingredients));
+            localStorage.setItem('copas_attendance', JSON.stringify(attendanceState));
+        }
 
         function updateLoginInput(role) {
             const roleDetails = {
@@ -186,217 +196,6 @@
             };
             document.getElementById('login-user-input').value = roleDetails[role].name;
         }
-
-
-        // 2. Modal Pembayaran dengan Pilihan DP (50%) atau Lunas
-// 1. Fungsi Modal Pembayaran Cerdas (DP atau Pelunasan)
-function openBookingPaymentModal(code) {
-    const res = reservations.find(r => r.code === code);
-    if (!res) return;
-
-    const totalBill = 100000; 
-    const dpAmount = totalBill * 0.5; 
-    const isAlreadyDP = res.status === 'DP 50% (Confirmed)';
-
-    const modal = document.getElementById('global-modal');
-    const box = document.getElementById('modal-box');
-
-    if (isAlreadyDP) {
-        box.innerHTML = `
-            <div class="text-center space-y-4">
-                <h3 class="font-bold text-lg text-gray-800">Pelunasan Sisa Tagihan Reservasi</h3>
-                <p class="text-sm text-gray-500">Kode Booking: <b>${res.code}</b> (${res.name})</p>
-                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-800">
-                    Status saat ini: <b>DP 50% Sudah Dibayar</b>. Sisa tagihan pelunasan:
-                </div>
-                
-                <div class="pt-2">
-                    <button onclick="selectBookingType('${res.code}', 'Pelunasan', ${dpAmount})" class="w-full p-4 border-2 border-emerald-500 bg-emerald-50 rounded-2xl text-left transition-all shadow-xs">
-                        <div class="text-xs font-semibold text-gray-500 uppercase">Pelunasan Sisa Tagihan (50%)</div>
-                        <div class="text-xl font-extrabold text-emerald-700">Rp ${dpAmount.toLocaleString()}</div>
-                        <div class="text-[10px] text-emerald-600 mt-1">Klik untuk memilih metode pembayaran pelunasan</div>
-                    </button>
-                </div>
-
-                <div id="booking-method-container" class="mt-4 pt-4 border-t hidden"></div>
-
-                <div class="flex justify-end gap-2 pt-4">
-                    <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
-                </div>
-            </div>
-        `;
-    } else {
-        box.innerHTML = `
-            <div class="text-center space-y-4">
-                <h3 class="font-bold text-lg text-gray-800">Pilih Jenis Pembayaran Reservasi</h3>
-                <p class="text-sm text-gray-500">Kode Booking: <b>${res.code}</b> (${res.name})</p>
-                
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button onclick="selectBookingType('${res.code}', 'DP', ${dpAmount})" class="p-4 border-2 border-amber-500 bg-amber-50 rounded-2xl text-left transition-all">
-                        <div class="text-xs font-semibold text-gray-500 uppercase">Down Payment</div>
-                        <div class="text-lg font-extrabold text-amber-700">Rp ${dpAmount.toLocaleString()}</div>
-                        <div class="text-[10px] text-amber-600 mt-1">Perhitungan 50% dari total</div>
-                    </button>
-                    <button onclick="selectBookingType('${res.code}', 'Lunas', ${totalBill})" class="p-4 border-2 border-emerald-500 bg-emerald-50 rounded-2xl text-left transition-all">
-                        <div class="text-xs font-semibold text-gray-500 uppercase">Bayar Lunas</div>
-                        <div class="text-lg font-extrabold text-emerald-700">Rp ${totalBill.toLocaleString()}</div>
-                        <div class="text-[10px] text-emerald-600 mt-1">Pelunasan 100% di awal</div>
-                    </button>
-                </div>
-
-                <div id="booking-method-container" class="mt-4 pt-4 border-t hidden"></div>
-
-                <div class="flex justify-end gap-2 pt-4">
-                    <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
-                </div>
-            </div>
-        `;
-    }
-    modal.classList.remove('hidden');
-}
-
-// 2. Fungsi Finalisasi Pembayaran (Pastikan posisi fungsi ini di luar fungsi openBookingPaymentModal)
-function finalizeBookingPayment(code, type, method, amount) {
-    const res = reservations.find(r => r.code === code);
-    if (res) {
-        // PERBAIKAN: Jika jenis pembayarannya 'Lunas' ATAU 'Pelunasan', ubah status menjadi 'Lunas'
-        if (type === 'Lunas' || type === 'Pelunasan') {
-            res.status = 'Lunas'; // Otomatis membersihkan data dari halaman kasir aktif
-        } else {
-            res.status = 'DP 50% (Confirmed)';
-        }
-    }
-    document.getElementById('global-modal').classList.add('hidden');
-    showToast(`Pembayaran ${type} reservasi ${code} via ${method} (Rp ${amount.toLocaleString()}) berhasil!`, 'success');
-    renderContent('kasir-booking');
-}
-
-// Fungsi untuk memproses pilihan jenis pembayaran (DP / Lunas / Pelunasan)
-function selectBookingType(code, type, amount) {
-    const container = document.getElementById('booking-method-container');
-    if (!container) return;
-    
-    container.classList.remove('hidden');
-
-    container.innerHTML = `
-        <div class="space-y-3 pt-2">
-            <p class="text-xs font-bold text-gray-700">Metode Pembayaran untuk (${type}): <span class="text-amber-700">Rp ${amount.toLocaleString()}</span></p>
-            <div class="grid grid-cols-3 gap-2">
-                <button onclick="finalizeBookingPayment('${code}', '${type}', 'Tunai', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">💵 Tunai</button>
-                <button onclick="selectBookingQRIS('${code}', '${type}', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">📱 QRIS</button>
-                <button onclick="selectBookingTransfer('${code}', '${type}', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">💳 Transfer</button>
-            </div>
-            <div id="booking-qris-area"></div>
-            <div id="booking-transfer-area"></div>
-        </div>
-    `;
-}
-
-// Tambahkan fungsi khusus untuk menampilkan info transfer rekening bank
-function selectBookingTransfer(code, type, amount) {
-    const qrisArea = document.getElementById('booking-qris-area');
-    const transferArea = document.getElementById('booking-transfer-area');
-    
-    if (qrisArea) qrisArea.innerHTML = ''; // Bersihkan QRIS jika ada
-    
-    if (transferArea) {
-        transferArea.innerHTML = `
-            <div class="mt-3 space-y-3 text-left bg-gray-50 p-3 rounded-xl border text-xs">
-                <p class="font-bold text-gray-700">Silakan Transfer ke Rekening Warung Copas:</p>
-                <p>Bank BCA: <b class="text-amber-700">1234-5678-90</b> (a.n. Warung Copas)</p>
-                <p class="text-gray-500">Jumlah Transfer: <b>Rp ${amount.toLocaleString()}</b></p>
-                <button onclick="finalizeBookingPayment('${code}', '${type}', 'Transfer Bank', ${amount})" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm mt-2">Konfirmasi Mutasi Masuk</button>
-            </div>
-        `;
-    }
-}
-
-// Fungsi untuk memunculkan Barcode QRIS khusus Booking
-function selectBookingQRIS(code, type, amount) {
-    const qrisArea = document.getElementById('booking-qris-area');
-    if (!qrisArea) return;
-    
-    qrisArea.innerHTML = `
-        <div class="mt-3 flex flex-col items-center space-y-2 bg-gray-50 p-3 rounded-xl border">
-            <p class="text-xs text-gray-600">Scan Barcode QRIS (${type}):</p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=BOOKING-${code}-${type}-${amount}" class="w-32 h-32 mx-auto">
-            <button onclick="finalizeBookingPayment('${code}', '${type}', 'QRIS', ${amount})" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-xs font-semibold shadow-sm mt-1">Konfirmasi Pembayaran QRIS Sukses</button>
-        </div>
-    `;
-}
-
-// 5. Finalisasi Pembayaran & Membersihkan Halaman jika Lunas
-function finalizeBookingPayment(code, type, method, amount) {
-    const res = reservations.find(r => r.code === code);
-    if (res) {
-        // Jika pembayarannya Lunas atau Pelunasan sisa tagihan, ubah status jadi 'Lunas'
-        if (type === 'Lunas' || type === 'Pelunasan') {
-            res.status = 'Lunas'; 
-        } else {
-            res.status = 'DP 50% (Confirmed)';
-        }
-    }
-    
-    // Tampilkan notifikasi toast sukses
-    showToast(`Pembayaran ${type} reservasi ${code} berhasil!`, 'success');
-    
-    // Panggil modal cetak struk otomatis
-    showReceiptModal(code, res ? res.name : 'Pelanggan', type, method, amount);
-}
-
-// Fungsi untuk menampilkan pop-up struk otomatis setelah pembayaran sukses
-function showReceiptModal(code, customer, type, method, amount) {
-    const modal = document.getElementById('global-modal');
-    const box = document.getElementById('modal-box');
-
-    box.innerHTML = `
-        <div class="text-center space-y-4">
-            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <div>
-                <h3 class="font-bold text-lg text-gray-800">Pembayaran Berhasil!</h3>
-                <p class="text-xs text-gray-500">Struk transaksi berhasil dicetak secara otomatis.</p>
-            </div>
-
-            <!-- Area Struk Kertas Kasir -->
-            <div class="bg-gray-50 border border-dashed border-gray-400 p-4 rounded-xl text-left text-xs font-mono space-y-2">
-                <div class="text-center pb-2 border-b border-gray-300">
-                    <p class="font-bold text-sm text-gray-900">WARUNG COPAS ERP</p>
-                    <p class="text-[10px] text-gray-500">Jl. Telekomunikasi No. 1, Bandung</p>
-                </div>
-                <div class="space-y-1 text-gray-700">
-                    <div class="flex justify-between"><span>Kode/ID:</span> <span class="font-bold">${code}</span></div>
-                    <div class="flex justify-between"><span>Pelanggan:</span> <span>${customer}</span></div>
-                    <div class="flex justify-between"><span>Jenis Bayar:</span> <span class="font-semibold text-amber-700">${type}</span></div>
-                    <div class="flex justify-between"><span>Metode:</span> <span>${method}</span></div>
-                </div>
-                <div class="border-t border-gray-300 pt-2 flex justify-between font-bold text-sm text-gray-900">
-                    <span>Total Bayar:</span>
-                    <span class="text-emerald-700">Rp ${amount.toLocaleString()}</span>
-                </div>
-                <div class="text-center pt-2 text-[10px] text-gray-400">
-                    <p>Terima Kasih atas Kunjungan Anda!</p>
-                    <p>Simpan struk ini sebagai bukti pembayaran sah.</p>
-                </div>
-            </div>
-
-            <div class="flex gap-2 pt-2">
-                <button onclick="window.print()" class="w-1/2 bg-gray-800 hover:bg-gray-900 text-white py-2.5 rounded-xl text-xs font-semibold shadow-sm">
-                    <i class="fa-solid fa-print mr-1"></i> Cetak Fisik
-                </button>
-                <button onclick="document.getElementById('global-modal').classList.add('hidden'); renderContent('kasir-booking');" class="w-1/2 bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-xs font-semibold shadow-sm">
-                    Selesai
-                </button>
-            </div>
-        </div>
-    `;
-    modal.classList.remove('hidden');
-}
-
-
-
-
 
         function handleLogin() {
             const selector = document.getElementById('role-selector');
@@ -778,109 +577,104 @@ function showReceiptModal(code, customer, type, method, amount) {
                 }
             }
             else if (id === 'kasir-transaksi') {
-    c.innerHTML = `
-        <div class="space-y-6">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Manajemen Transaksi & Pembayaran</h1>
-                <p class="text-sm text-gray-500">Pilih metode pembayaran, scan barcode QRIS, dan cetak struk.</p>
-            </div>
-            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-                <div class="p-4 bg-gray-50 border-b font-semibold text-sm text-gray-700">Daftar Pesanan Belum Bayar</div>
-                <div class="divide-y" id="cashier-order-list">
-                    ${orders.length === 0 ? '<div class="p-6 text-center text-gray-400 text-sm">Tidak ada transaksi aktif saat ini.</div>' : orders.map(o => `
-                        <div class="p-4 flex items-center justify-between hover:bg-gray-50">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-gray-800">${o.id}</span>
-                                    <span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded">${o.table}</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">${o.customer} — ${o.items}</p>
-                                <p class="text-sm font-bold text-amber-700 mt-1">Rp ${o.total.toLocaleString()}</p>
-                            </div>
-                            <div class="space-x-2">
-                                <button onclick="openPaymentModal('${o.id}')" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">Pilih Pembayaran</button>
-                                <button onclick="cancelOrder('${o.id}')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-sm font-semibold">Batalkan</button>
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Manajemen Transaksi & Pembayaran</h1>
+                            <p class="text-sm text-gray-500">Pilih metode pembayaran, scan barcode QRIS, dan cetak struk.</p>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                            <div class="p-4 bg-gray-50 border-b font-semibold text-sm text-gray-700">Daftar Pesanan Belum Bayar</div>
+                            <div class="divide-y" id="cashier-order-list">
+                                ${orders.length === 0 ? '<div class="p-6 text-center text-gray-400 text-sm">Tidak ada transaksi aktif saat ini.</div>' : orders.map(o => `
+                                    <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-bold text-gray-800">${o.id}</span>
+                                                <span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded">${o.table}</span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-1">${o.customer} — ${o.items}</p>
+                                            <p class="text-sm font-bold text-amber-700 mt-1">Rp ${o.total.toLocaleString()}</p>
+                                        </div>
+                                        <div class="space-x-2">
+                                            <button onclick="openPaymentModal('${o.id}')" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">Pilih Pembayaran</button>
+                                            <button onclick="cancelOrder('${o.id}')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-sm font-semibold">Batalkan</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-            </div>
-        </div>
-    `;
-}
+                    </div>
+                `;
+            }
+            else if (id === 'kasir-booking') {
+                const activeReservations = reservations.filter(r => r.status !== 'Lunas' && r.status !== 'Cancelled');
 
-            // 1. Tampilan Tabel Konfirmasi Booking (Hanya menampilkan yang belum lunas / aktif)
-else if (id === 'kasir-booking') {
-    // Filter hanya menampilkan reservasi yang belum lunas atau masih pending/confirmed
-    const activeReservations = reservations.filter(r => r.status !== 'Lunas' && r.status !== 'Cancelled');
-
-    c.innerHTML = `
-        <div class="space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Konfirmasi Booking & Pembayaran DP</h1>
-                    <p class="text-sm text-gray-500">Verifikasi reservasi, pilih pembayaran DP (50%) atau Lunas, dan kelola check-in tamu.</p>
-                </div>
-                <div class="bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl text-xs font-semibold text-amber-800">
-                    <i class="fa-solid fa-calendar-check mr-1"></i> Antrean Booking Pending: ${activeReservations.length} Tamu
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
-                        <tr>
-                            <th class="p-4">Kode & Pemesan</th>
-                            <th class="p-4">Jadwal</th>
-                            <th class="p-4">Meja & Pax</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4 text-center">Aksi Kasir</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                        ${activeReservations.length === 0 ? `
-                            <tr><td colspan="5" class="p-8 text-center text-gray-400">Semua pembayaran booking sudah lunas! Halaman bersih.</td></tr>
-                        ` : activeReservations.map(r => `
-                            <tr class="hover:bg-gray-50">
-                                <td class="p-4">
-                                    <span class="font-bold text-amber-700">${r.code}</span>
-                                    <div class="font-semibold text-gray-800 mt-0.5">${r.name}</div>
-                                    <div class="text-xs text-gray-400"><i class="fa-brands fa-whatsapp text-emerald-600"></i> ${r.phone}</div>
-                                </td>
-                                <td class="p-4 text-gray-600 font-medium">
-                                    <div>${r.date}</div>
-                                    <div class="text-xs text-amber-600 font-bold"><i class="fa-regular fa-clock"></i> ${r.time} WIB</div>
-                                </td>
-                                <td class="p-4">
-                                    <span class="font-semibold text-gray-800">${r.table}</span>
-                                    <div class="text-xs text-gray-500">${r.pax || '2'} Orang</div>
-                                </td>
-                                <td class="p-4">
-                                    <span class="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-semibold border border-amber-200">
-                                        ${r.status || 'Pending'}
-                                    </span>
-                                </td>
-                                <td class="p-4 text-center space-x-1">
-                                    <button onclick="openBookingPaymentModal('${r.code}')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs">
-                                        <i class="fa-solid fa-cash-register"></i> Pembayaran
-                                    </button>
-                                    <button onclick="updateReservationStatus('${r.code}', 'Checked-in')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs">
-                                        Check-in
-                                    </button>
-                                    <button onclick="updateReservationStatus('${r.code}', 'Cancelled')" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1.5 rounded-xl text-xs font-semibold">
-                                        Batal
-                                    </button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
-}
-
-
+                c.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Konfirmasi Booking & Pembayaran DP</h1>
+                                <p class="text-sm text-gray-500">Verifikasi reservasi, pilih pembayaran DP (50%) atau Lunas, dan kelola check-in tamu.</p>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl text-xs font-semibold text-amber-800">
+                                <i class="fa-solid fa-calendar-check mr-1"></i> Antrean Booking Pending: ${activeReservations.length} Tamu
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
+                                    <tr>
+                                        <th class="p-4">Kode & Pemesan</th>
+                                        <th class="p-4">Jadwal</th>
+                                        <th class="p-4">Meja & Pax</th>
+                                        <th class="p-4">Status</th>
+                                        <th class="p-4 text-center">Aksi Kasir</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    ${activeReservations.length === 0 ? `
+                                        <tr><td colspan="5" class="p-8 text-center text-gray-400">Semua pembayaran booking sudah lunas! Halaman bersih.</td></tr>
+                                    ` : activeReservations.map(r => `
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="p-4">
+                                                <span class="font-bold text-amber-700">${r.code}</span>
+                                                <div class="font-semibold text-gray-800 mt-0.5">${r.name}</div>
+                                                <div class="text-xs text-gray-400"><i class="fa-brands fa-whatsapp text-emerald-600"></i> ${r.phone}</div>
+                                            </td>
+                                            <td class="p-4 text-gray-600 font-medium">
+                                                <div>${r.date}</div>
+                                                <div class="text-xs text-amber-600 font-bold"><i class="fa-regular fa-clock"></i> ${r.time} WIB</div>
+                                            </td>
+                                            <td class="p-4">
+                                                <span class="font-semibold text-gray-800">${r.table}</span>
+                                                <div class="text-xs text-gray-500">${r.pax || '2'} Orang</div>
+                                            </td>
+                                            <td class="p-4">
+                                                <span class="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-semibold border border-amber-200">
+                                                    ${r.status || 'Pending'}
+                                                </span>
+                                            </td>
+                                            <td class="p-4 text-center space-x-1">
+                                                <button onclick="openBookingPaymentModal('${r.code}')" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs">
+                                                    <i class="fa-solid fa-cash-register"></i> Pembayaran
+                                                </button>
+                                                <button onclick="updateReservationStatus('${r.code}', 'Checked-in')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs">
+                                                    Check-in
+                                                </button>
+                                                <button onclick="updateReservationStatus('${r.code}', 'Cancelled')" class="bg-red-100 hover:bg-red-200 text-red-700 px-2.5 py-1.5 rounded-xl text-xs font-semibold">
+                                                    Batal
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
             else if (id === 'pelayan-pesanan') {
                 c.innerHTML = `
                     <div class="space-y-6">
@@ -1199,7 +993,7 @@ else if (id === 'kasir-booking') {
             }
         }
 
-        // --- FUNGSI INTERAKTIF & MODUL LOGIC ---
+        // --- FUNGSI INTERAKTIF & MODUL LOGIC DENGAN PERSISTENCE ---
 
         function initAdminChart() {
             const ctx = document.getElementById('adminSalesChart');
@@ -1281,12 +1075,14 @@ else if (id === 'kasir-booking') {
                     showToast('Menu berhasil diperbarui.', 'success');
                 }
             }
+            saveData();
             document.getElementById('global-modal').classList.add('hidden');
             renderContent('admin-menu');
         }
 
         function deleteMenu(id) {
             menus = menus.filter(m => m.id !== id);
+            saveData();
             showToast('Menu berhasil dihapus.', 'success');
             renderContent('admin-menu');
         }
@@ -1308,6 +1104,7 @@ else if (id === 'kasir-booking') {
 
             const newId = 'EMP-0' + (employees.length + 1);
             employees.push({ id: newId, name, role, shift, status: 'Aktif' });
+            saveData();
             document.getElementById('add-employee-card').classList.add('hidden');
             renderContent('admin-users');
             showToast(`Pegawai ${name} berhasil didaftarkan.`, 'success');
@@ -1315,6 +1112,7 @@ else if (id === 'kasir-booking') {
 
         function removeEmployee(id) {
             employees = employees.filter(e => e.id !== id);
+            saveData();
             renderContent('admin-users');
             showToast('Data pegawai dihapus.', 'success');
         }
@@ -1358,6 +1156,7 @@ else if (id === 'kasir-booking') {
             };
 
             orders.push(newOrd);
+            saveData();
             activeCart = [];
             showToast('Pesanan berhasil dikirim ke Dapur!', 'success');
             switchTab('pelayan-monitoring');
@@ -1368,6 +1167,7 @@ else if (id === 'kasir-booking') {
             const ord = orders.find(o => o.id === orderId);
             if (ord) {
                 ord.status = newStatus;
+                saveData();
                 showToast(`Status pesanan ${orderId} diubah menjadi ${newStatus}`, 'success');
                 if (currentRole === 'dapur') renderContent('dapur-pesanan');
                 else if (currentRole === 'pelayan') renderContent('pelayan-monitoring');
@@ -1380,119 +1180,288 @@ else if (id === 'kasir-booking') {
 
         function cancelOrder(orderId) {
             orders = orders.filter(o => o.id !== orderId);
+            saveData();
             showToast(`Pesanan ${orderId} telah dibatalkan.`, 'error');
             if (currentRole === 'kasir') renderContent('kasir-transaksi');
             else if (currentRole === 'pelayan') renderContent('pelayan-monitoring');
         }
 
-        function payOrder(orderId) {
+        // Membuka Modal Pilihan Pembayaran & Barcode (Kasir Transaksi)
+        function openPaymentModal(orderId) {
             const ord = orders.find(o => o.id === orderId);
-            if (ord) {
-                ord.status = 'Selesai';
-                orders = orders.filter(o => o.id !== orderId); // Selesaikan transaksi dari antrean bayar
-                showToast(`Pembayaran ${orderId} lunas! Struk tercetak.`, 'success');
-                renderContent('kasir-transaksi');
+            if (!ord) return;
+
+            const modal = document.getElementById('global-modal');
+            const box = document.getElementById('modal-box');
+
+            box.innerHTML = `
+                <div class="text-center space-y-4">
+                    <h3 class="font-bold text-lg text-gray-800">Pilih Metode Pembayaran</h3>
+                    <p class="text-sm text-gray-500">Total Tagihan untuk <b>${ord.id}</b> (${ord.customer}):</p>
+                    <div class="text-2xl font-extrabold text-amber-700">Rp ${ord.total.toLocaleString()}</div>
+                    
+                    <div class="grid grid-cols-3 gap-2 pt-2">
+                        <button onclick="selectPaymentMethod('${ord.id}', 'Tunai')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">💵 Tunai (Cash)</button>
+                        <button onclick="selectPaymentMethod('${ord.id}', 'QRIS')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">📱 QRIS (Barcode)</button>
+                        <button onclick="selectPaymentMethod('${ord.id}', 'Transfer')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">💳 Transfer Bank</button>
+                    </div>
+
+                    <div id="payment-action-area" class="mt-4 pt-4 border-t hidden">
+                        <!-- Area Dinamis Barcode / Tunai -->
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-4">
+                        <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        // Handler pemilihan metode pembayaran
+        function selectPaymentMethod(orderId, method) {
+            const ord = orders.find(o => o.id === orderId);
+            const actionArea = document.getElementById('payment-action-area');
+            actionArea.classList.remove('hidden');
+
+            if (method === 'Tunai') {
+                actionArea.innerHTML = `
+                    <div class="space-y-3 text-left">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase">Uang Diterima dari Pelanggan</label>
+                        <input type="number" id="cash-given" placeholder="Cth. 50000" class="w-full bg-gray-50 border rounded-xl px-3 py-2 text-sm">
+                        <button onclick="processCashPayment('${ord.id}', ${ord.total})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Selesaikan & Cetak Struk</button>
+                    </div>
+                `;
+            } else if (method === 'QRIS') {
+                actionArea.innerHTML = `
+                    <div class="space-y-3 flex flex-col items-center">
+                        <p class="text-xs font-semibold text-gray-600">Scan Barcode QRIS di bawah menggunakan GoPay, OVO, Dana, atau M-Banking:</p>
+                        <div class="bg-white p-3 border-2 border-dashed border-amber-500 rounded-2xl inline-block shadow-xs">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COPAS-ERP-PAYMENT-${ord.id}-${ord.total}" alt="QRIS Barcode" class="w-36 h-36 mx-auto">
+                        </div>
+                        <p class="text-xs text-amber-700 font-bold">NMID: ID102938475692 - Warung Copas</p>
+                        <button onclick="finalizePayment('${ord.id}', 'QRIS')" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Konfirmasi Pembayaran Berhasil</button>
+                    </div>
+                `;
+            } else if (method === 'Transfer') {
+                actionArea.innerHTML = `
+                    <div class="space-y-3 text-left bg-gray-50 p-3 rounded-xl border text-xs">
+                        <p class="font-bold text-gray-700">Silakan Transfer ke Rekening Warung Copas:</p>
+                        <p>Bank BCA: <b class="text-amber-700">1234-5678-90</b> (a.n. Warung Copas)</p>
+                        <button onclick="finalizePayment('${ord.id}', 'Transfer Bank')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm mt-2">Konfirmasi Mutasi Masuk</button>
+                    </div>
+                `;
             }
         }
 
-        // Membuka Modal Pilihan Pembayaran & Barcode
-function openPaymentModal(orderId) {
-    const ord = orders.find(o => o.id === orderId);
-    if (!ord) return;
+        function processCashPayment(orderId, total) {
+            const given = parseInt(document.getElementById('cash-given').value);
+            if (isNaN(given) || given < total) {
+                showToast('Jumlah uang tunai kurang dari total tagihan!', 'error');
+                return;
+            }
+            const change = given - total;
+            finalizePayment(orderId, `Tunai (Kembalian: Rp ${change.toLocaleString()})`);
+        }
 
-    const modal = document.getElementById('global-modal');
-    const box = document.getElementById('modal-box');
+        // Finalisasi Transaksi Pesanan Biasa (Manajemen Transaksi)
+        function finalizePayment(orderId, methodInfo) {
+            const ord = orders.find(o => o.id === orderId);
+            const customerName = ord ? ord.customer : 'Pelanggan Umum';
+            const totalAmount = ord ? ord.total : 0;
 
-    box.innerHTML = `
-        <div class="text-center space-y-4">
-            <h3 class="font-bold text-lg text-gray-800">Pilih Metode Pembayaran</h3>
-            <p class="text-sm text-gray-500">Total Tagihan untuk <b>${ord.id}</b> (${ord.customer}):</p>
-            <div class="text-2xl font-extrabold text-amber-700">Rp ${ord.total.toLocaleString()}</div>
+            orders = orders.filter(o => o.id !== orderId);
+            saveData();
             
-            <div class="grid grid-cols-3 gap-2 pt-2">
-                <button onclick="selectPaymentMethod('${ord.id}', 'Tunai')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">💵 Tunai (Cash)</button>
-                <button onclick="selectPaymentMethod('${ord.id}', 'QRIS')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">📱 QRIS (Barcode)</button>
-                <button onclick="selectPaymentMethod('${ord.id}', 'Transfer')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">💳 Transfer Bank</button>
-            </div>
+            showReceiptModal(orderId, customerName, 'Pembayaran Pesanan', methodInfo, totalAmount);
+        }
 
-            <div id="payment-action-area" class="mt-4 pt-4 border-t hidden">
-                <!-- Area Dinamis Barcode / Tunai -->
-            </div>
+        // --- Modul Booking Kasir & Pelanggan ---
 
-            <div class="flex justify-end gap-2 pt-4">
-                <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
-            </div>
-        </div>
-    `;
-    modal.classList.remove('hidden');
-}
+        function openBookingPaymentModal(code) {
+            const res = reservations.find(r => r.code === code);
+            if (!res) return;
 
-// Handler pemilihan metode pembayaran
-function selectPaymentMethod(orderId, method) {
-    const ord = orders.find(o => o.id === orderId);
-    const actionArea = document.getElementById('payment-action-area');
-    actionArea.classList.remove('hidden');
+            const totalBill = 100000; 
+            const dpAmount = totalBill * 0.5; 
+            const isAlreadyDP = res.status === 'DP 50% (Confirmed)';
 
-    if (method === 'Tunai') {
-        actionArea.innerHTML = `
-            <div class="space-y-3 text-left">
-                <label class="block text-xs font-semibold text-gray-500 uppercase">Uang Diterima dari Pelanggan</label>
-                <input type="number" id="cash-given" placeholder="Cth. 50000" class="w-full bg-gray-50 border rounded-xl px-3 py-2 text-sm">
-                <button onclick="processCashPayment('${ord.id}', ${ord.total})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Selesaikan & Cetak Struk</button>
-            </div>
-        `;
-    } else if (method === 'QRIS') {
-        actionArea.innerHTML = `
-            <div class="space-y-3 flex flex-col items-center">
-                <p class="text-xs font-semibold text-gray-600">Scan Barcode QRIS di bawah menggunakan GoPay, OVO, Dana, atau M-Banking:</p>
-                <!-- Simulasi Barcode menggunakan gambar placeholder QR -->
-                <div class="bg-white p-3 border-2 border-dashed border-amber-500 rounded-2xl inline-block shadow-xs">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COPAS-ERP-PAYMENT-${ord.id}-${ord.total}" alt="QRIS Barcode" class="w-36 h-36 mx-auto">
+            const modal = document.getElementById('global-modal');
+            const box = document.getElementById('modal-box');
+
+            if (isAlreadyDP) {
+                box.innerHTML = `
+                    <div class="text-center space-y-4">
+                        <h3 class="font-bold text-lg text-gray-800">Pelunasan Sisa Tagihan Reservasi</h3>
+                        <p class="text-sm text-gray-500">Kode Booking: <b>${res.code}</b> (${res.name})</p>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-800">
+                            Status saat ini: <b>DP 50% Sudah Dibayar</b>. Sisa tagihan pelunasan:
+                        </div>
+                        
+                        <div class="pt-2">
+                            <button onclick="selectBookingType('${res.code}', 'Pelunasan', ${dpAmount})" class="w-full p-4 border-2 border-emerald-500 bg-emerald-50 rounded-2xl text-left transition-all shadow-xs">
+                                <div class="text-xs font-semibold text-gray-500 uppercase">Pelunasan Sisa Tagihan (50%)</div>
+                                <div class="text-xl font-extrabold text-emerald-700">Rp ${dpAmount.toLocaleString()}</div>
+                                <div class="text-[10px] text-emerald-600 mt-1">Klik untuk memilih metode pembayaran pelunasan</div>
+                            </button>
+                        </div>
+
+                        <div id="booking-method-container" class="mt-4 pt-4 border-t hidden"></div>
+
+                        <div class="flex justify-end gap-2 pt-4">
+                            <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                box.innerHTML = `
+                    <div class="text-center space-y-4">
+                        <h3 class="font-bold text-lg text-gray-800">Pilih Jenis Pembayaran Reservasi</h3>
+                        <p class="text-sm text-gray-500">Kode Booking: <b>${res.code}</b> (${res.name})</p>
+                        
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button onclick="selectBookingType('${res.code}', 'DP', ${dpAmount})" class="p-4 border-2 border-amber-500 bg-amber-50 rounded-2xl text-left transition-all">
+                                <div class="text-xs font-semibold text-gray-500 uppercase">Down Payment</div>
+                                <div class="text-lg font-extrabold text-amber-700">Rp ${dpAmount.toLocaleString()}</div>
+                                <div class="text-[10px] text-amber-600 mt-1">Perhitungan 50% dari total</div>
+                            </button>
+                            <button onclick="selectBookingType('${res.code}', 'Lunas', ${totalBill})" class="p-4 border-2 border-emerald-500 bg-emerald-50 rounded-2xl text-left transition-all">
+                                <div class="text-xs font-semibold text-gray-500 uppercase">Bayar Lunas</div>
+                                <div class="text-lg font-extrabold text-emerald-700">Rp ${totalBill.toLocaleString()}</div>
+                                <div class="text-[10px] text-emerald-600 mt-1">Pelunasan 100% di awal</div>
+                            </button>
+                        </div>
+
+                        <div id="booking-method-container" class="mt-4 pt-4 border-t hidden"></div>
+
+                        <div class="flex justify-end gap-2 pt-4">
+                            <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
+                        </div>
+                    </div>
+                `;
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function selectBookingType(code, type, amount) {
+            const container = document.getElementById('booking-method-container');
+            if (!container) return;
+            
+            container.classList.remove('hidden');
+
+            container.innerHTML = `
+                <div class="space-y-3 pt-2">
+                    <p class="text-xs font-bold text-gray-700">Metode Pembayaran untuk (${type}): <span class="text-amber-700">Rp ${amount.toLocaleString()}</span></p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="finalizeBookingPayment('${code}', '${type}', 'Tunai', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">💵 Tunai</button>
+                        <button onclick="selectBookingQRIS('${code}', '${type}', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">📱 QRIS</button>
+                        <button onclick="selectBookingTransfer('${code}', '${type}', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500">💳 Transfer</button>
+                    </div>
+                    <div id="booking-qris-area"></div>
+                    <div id="booking-transfer-area"></div>
                 </div>
-                <p class="text-xs text-amber-700 font-bold">NMID: ID102938475692 - Warung Copas</p>
-                <button onclick="finalizePayment('${ord.id}', 'QRIS')" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Konfirmasi Pembayaran Berhasil</button>
-            </div>
-        `;
-    } else if (method === 'Transfer') {
-        actionArea.innerHTML = `
-            <div class="space-y-3 text-left bg-gray-50 p-3 rounded-xl border text-xs">
-                <p class="font-bold text-gray-700">Silakan Transfer ke Rekening Warung Copas:</p>
-                <p>Bank BCA: <b class="text-amber-700">1234-5678-90</b> (a.n. Warung Copas)</p>
-                <button onclick="finalizePayment('${ord.id}', 'Transfer Bank')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm mt-2">Konfirmasi Mutasi Masuk</button>
-            </div>
-        `;
-    }
-}
+            `;
+        }
 
-// Proses Pembayaran Tunai dengan Hitung Kembalian
-function processCashPayment(orderId, total) {
-    const given = parseInt(document.getElementById('cash-given').value);
-    if (isNaN(given) || given < total) {
-        showToast('Jumlah uang tunai kurang dari total tagihan!', 'error');
-        return;
-    }
-    const change = given - total;
-    finalizePayment(orderId, `Tunai (Kembalian: Rp ${change.toLocaleString()})`);
-}
+        function selectBookingTransfer(code, type, amount) {
+            const qrisArea = document.getElementById('booking-qris-area');
+            const transferArea = document.getElementById('booking-transfer-area');
+            
+            if (qrisArea) qrisArea.innerHTML = ''; 
+            
+            if (transferArea) {
+                transferArea.innerHTML = `
+                    <div class="mt-3 space-y-3 text-left bg-gray-50 p-3 rounded-xl border text-xs">
+                        <p class="font-bold text-gray-700">Silakan Transfer ke Rekening Warung Copas:</p>
+                        <p>Bank BCA: <b class="text-amber-700">1234-5678-90</b> (a.n. Warung Copas)</p>
+                        <p class="text-gray-500">Jumlah Transfer: <b>Rp ${amount.toLocaleString()}</b></p>
+                        <button onclick="finalizeBookingPayment('${code}', '${type}', 'Transfer Bank', ${amount})" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm mt-2">Konfirmasi Mutasi Masuk</button>
+                    </div>
+                `;
+            }
+        }
 
-// Finalisasi Transaksi Pesanan Biasa (Manajemen Transaksi)
-function finalizePayment(orderId, methodInfo) {
-    const ord = orders.find(o => o.id === orderId);
-    const customerName = ord ? ord.customer : 'Pelanggan Umum';
-    const totalAmount = ord ? ord.total : 0;
+        function selectBookingQRIS(code, type, amount) {
+            const qrisArea = document.getElementById('booking-qris-area');
+            if (!qrisArea) return;
+            
+            qrisArea.innerHTML = `
+                <div class="mt-3 flex flex-col items-center space-y-2 bg-gray-50 p-3 rounded-xl border">
+                    <p class="text-xs text-gray-600">Scan Barcode QRIS (${type}):</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=BOOKING-${code}-${type}-${amount}" class="w-32 h-32 mx-auto">
+                    <button onclick="finalizeBookingPayment('${code}', '${type}', 'QRIS', ${amount})" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-xs font-semibold shadow-sm mt-1">Konfirmasi Pembayaran QRIS Sukses</button>
+                </div>
+            `;
+        }
 
-    // Hapus pesanan dari daftar karena sudah lunas
-    orders = orders.filter(o => o.id !== orderId);
-    
-    // Tutup atau timpa modal dengan pop-up cetak struk otomatis (menggunakan showReceiptModal)
-    showReceiptModal(orderId, customerName, 'Pembayaran Pesanan', methodInfo, totalAmount);
-}
+        function finalizeBookingPayment(code, type, method, amount) {
+            const res = reservations.find(r => r.code === code);
+            if (res) {
+                if (type === 'Lunas' || type === 'Pelunasan') {
+                    res.status = 'Lunas'; 
+                } else {
+                    res.status = 'DP 50% (Confirmed)';
+                }
+            }
+            saveData();
+            
+            showToast(`Pembayaran ${type} reservasi ${code} berhasil!`, 'success');
+            showReceiptModal(code, res ? res.name : 'Pelanggan', type, method, amount);
+        }
 
-        // 5. Konfirmasi & Pembatalan Booking (Kasir)
+        function showReceiptModal(code, customer, type, method, amount) {
+            const modal = document.getElementById('global-modal');
+            const box = document.getElementById('modal-box');
+
+            box.innerHTML = `
+                <div class="text-center space-y-4">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-800">Pembayaran Berhasil!</h3>
+                        <p class="text-xs text-gray-500">Struk transaksi berhasil dicetak secara otomatis.</p>
+                    </div>
+
+                    <div class="bg-gray-50 border border-dashed border-gray-400 p-4 rounded-xl text-left text-xs font-mono space-y-2">
+                        <div class="text-center pb-2 border-b border-gray-300">
+                            <p class="font-bold text-sm text-gray-900">WARUNG COPAS ERP</p>
+                            <p class="text-[10px] text-gray-500">Jl. Telekomunikasi No. 1, Bandung</p>
+                        </div>
+                        <div class="space-y-1 text-gray-700">
+                            <div class="flex justify-between"><span>Kode/ID:</span> <span class="font-bold">${code}</span></div>
+                            <div class="flex justify-between"><span>Pelanggan:</span> <span>${customer}</span></div>
+                            <div class="flex justify-between"><span>Jenis Bayar:</span> <span class="font-semibold text-amber-700">${type}</span></div>
+                            <div class="flex justify-between"><span>Metode:</span> <span>${method}</span></div>
+                        </div>
+                        <div class="border-t border-gray-300 pt-2 flex justify-between font-bold text-sm text-gray-900">
+                            <span>Total Bayar:</span>
+                            <span class="text-emerald-700">Rp ${amount.toLocaleString()}</span>
+                        </div>
+                        <div class="text-center pt-2 text-[10px] text-gray-400">
+                            <p>Terima Kasih atas Kunjungan Anda!</p>
+                            <p>Simpan struk ini sebagai bukti pembayaran sah.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="window.print()" class="w-1/2 bg-gray-800 hover:bg-gray-900 text-white py-2.5 rounded-xl text-xs font-semibold shadow-sm">
+                            <i class="fa-solid fa-print mr-1"></i> Cetak Fisik
+                        </button>
+                        <button onclick="document.getElementById('global-modal').classList.add('hidden'); if(activeTab) renderContent(activeTab);" class="w-1/2 bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-xs font-semibold shadow-sm">
+                            Selesai
+                        </button>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
         function updateReservationStatus(code, status) {
             const res = reservations.find(r => r.code === code);
             if (res) {
                 res.status = status;
+                saveData();
                 showToast(`Reservasi ${code} diperbarui menjadi ${status}`, status === 'Cancelled' ? 'error' : 'success');
                 renderContent('kasir-booking');
             }
@@ -1503,6 +1472,7 @@ function finalizePayment(orderId, methodInfo) {
             const t = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
             attendanceState.status = 'Hadir (Bertugas)';
             attendanceState.clockIn = t;
+            saveData();
             if(document.getElementById('att-text')) {
                 document.getElementById('att-text').innerText = attendanceState.status;
                 document.getElementById('att-in').innerText = t;
@@ -1514,6 +1484,7 @@ function finalizePayment(orderId, methodInfo) {
             const t = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
             attendanceState.status = 'Selesai Shift';
             attendanceState.clockOut = t;
+            saveData();
             if(document.getElementById('att-text')) {
                 document.getElementById('att-text').innerText = attendanceState.status;
                 document.getElementById('att-out').innerText = t;
@@ -1537,6 +1508,7 @@ function finalizePayment(orderId, methodInfo) {
 
             const randCode = 'COP-' + Math.floor(1000 + Math.random() * 9000);
             reservations.push({ code: randCode, name, date, time, pax, table, status: 'Pending', phone });
+            saveData();
             showToast(`Booking berhasil! Kode reservasi Anda: ${randCode}`, 'success');
             switchTab('pelanggan-status');
         }
