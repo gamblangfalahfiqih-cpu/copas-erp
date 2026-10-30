@@ -1475,12 +1475,17 @@ function processCashPayment(orderId, total) {
     finalizePayment(orderId, `Tunai (Kembalian: Rp ${change.toLocaleString()})`);
 }
 
-// Finalisasi Transaksi
+// Finalisasi Transaksi Pesanan Biasa (Manajemen Transaksi)
 function finalizePayment(orderId, methodInfo) {
+    const ord = orders.find(o => o.id === orderId);
+    const customerName = ord ? ord.customer : 'Pelanggan Umum';
+    const totalAmount = ord ? ord.total : 0;
+
+    // Hapus pesanan dari daftar karena sudah lunas
     orders = orders.filter(o => o.id !== orderId);
-    document.getElementById('global-modal').classList.add('hidden');
-    showToast(`Pembayaran ${orderId} lunas via ${methodInfo}! Struk berhasil dicetak.`, 'success');
-    renderContent('kasir-transaksi');
+    
+    // Tutup atau timpa modal dengan pop-up cetak struk otomatis (menggunakan showReceiptModal)
+    showReceiptModal(orderId, customerName, 'Pembayaran Pesanan', methodInfo, totalAmount);
 }
 
         // 5. Konfirmasi & Pembatalan Booking (Kasir)
