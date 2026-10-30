@@ -567,36 +567,36 @@
                 }
             }
             else if (id === 'kasir-transaksi') {
-                c.innerHTML = `
-                    <div class="space-y-6">
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-900">Manajemen Transaksi & Pembayaran</h1>
-                            <p class="text-sm text-gray-500">Konfirmasi pembayaran pelanggan dan cetak struk.</p>
-                        </div>
-                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                            <div class="p-4 bg-gray-50 border-b font-semibold text-sm text-gray-700">Daftar Pesanan Belum Bayar</div>
-                            <div class="divide-y" id="cashier-order-list">
-                                ${orders.length === 0 ? '<div class="p-6 text-center text-gray-400 text-sm">Tidak ada transaksi aktif saat ini.</div>' : orders.map(o => `
-                                    <div class="p-4 flex items-center justify-between hover:bg-gray-50">
-                                        <div>
-                                            <div class="flex items-center gap-2">
-                                                <span class="font-bold text-gray-800">${o.id}</span>
-                                                <span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded">${o.table}</span>
-                                            </div>
-                                            <p class="text-xs text-gray-500 mt-1">${o.customer} — ${o.items}</p>
-                                            <p class="text-sm font-bold text-amber-700 mt-1">Rp ${o.total.toLocaleString()}</p>
-                                        </div>
-                                        <div class="space-x-2">
-                                            <button onclick="payOrder('${o.id}')" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">Konfirmasi Bayar</button>
-                                            <button onclick="cancelOrder('${o.id}')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-sm font-semibold">Batalkan</button>
-                                        </div>
-                                    </div>
-                                `).join('')}
+    c.innerHTML = `
+        <div class="space-y-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Manajemen Transaksi & Pembayaran</h1>
+                <p class="text-sm text-gray-500">Pilih metode pembayaran, scan barcode QRIS, dan cetak struk.</p>
+            </div>
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                <div class="p-4 bg-gray-50 border-b font-semibold text-sm text-gray-700">Daftar Pesanan Belum Bayar</div>
+                <div class="divide-y" id="cashier-order-list">
+                    ${orders.length === 0 ? '<div class="p-6 text-center text-gray-400 text-sm">Tidak ada transaksi aktif saat ini.</div>' : orders.map(o => `
+                        <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-gray-800">${o.id}</span>
+                                    <span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded">${o.table}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">${o.customer} — ${o.items}</p>
+                                <p class="text-sm font-bold text-amber-700 mt-1">Rp ${o.total.toLocaleString()}</p>
+                            </div>
+                            <div class="space-x-2">
+                                <button onclick="openPaymentModal('${o.id}')" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">Pilih Pembayaran</button>
+                                <button onclick="cancelOrder('${o.id}')" class="bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-xl text-sm font-semibold">Batalkan</button>
                             </div>
                         </div>
-                    </div>
-                `;
-            }
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
             else if (id === 'kasir-booking') {
                 c.innerHTML = `
                     <div class="space-y-6">
@@ -1141,6 +1141,94 @@
                 renderContent('kasir-transaksi');
             }
         }
+
+        // Membuka Modal Pilihan Pembayaran & Barcode
+function openPaymentModal(orderId) {
+    const ord = orders.find(o => o.id === orderId);
+    if (!ord) return;
+
+    const modal = document.getElementById('global-modal');
+    const box = document.getElementById('modal-box');
+
+    box.innerHTML = `
+        <div class="text-center space-y-4">
+            <h3 class="font-bold text-lg text-gray-800">Pilih Metode Pembayaran</h3>
+            <p class="text-sm text-gray-500">Total Tagihan untuk <b>${ord.id}</b> (${ord.customer}):</p>
+            <div class="text-2xl font-extrabold text-amber-700">Rp ${ord.total.toLocaleString()}</div>
+            
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="selectPaymentMethod('${ord.id}', 'Tunai')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">💵 Tunai (Cash)</button>
+                <button onclick="selectPaymentMethod('${ord.id}', 'QRIS')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">📱 QRIS (Barcode)</button>
+                <button onclick="selectPaymentMethod('${ord.id}', 'Transfer')" class="p-3 border rounded-xl font-semibold text-xs hover:bg-amber-50 hover:border-amber-500 transition-all">💳 Transfer Bank</button>
+            </div>
+
+            <div id="payment-action-area" class="mt-4 pt-4 border-t hidden">
+                <!-- Area Dinamis Barcode / Tunai -->
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+                <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
+            </div>
+        </div>
+    `;
+    modal.classList.remove('hidden');
+}
+
+// Handler pemilihan metode pembayaran
+function selectPaymentMethod(orderId, method) {
+    const ord = orders.find(o => o.id === orderId);
+    const actionArea = document.getElementById('payment-action-area');
+    actionArea.classList.remove('hidden');
+
+    if (method === 'Tunai') {
+        actionArea.innerHTML = `
+            <div class="space-y-3 text-left">
+                <label class="block text-xs font-semibold text-gray-500 uppercase">Uang Diterima dari Pelanggan</label>
+                <input type="number" id="cash-given" placeholder="Cth. 50000" class="w-full bg-gray-50 border rounded-xl px-3 py-2 text-sm">
+                <button onclick="processCashPayment('${ord.id}', ${ord.total})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Selesaikan & Cetak Struk</button>
+            </div>
+        `;
+    } else if (method === 'QRIS') {
+        actionArea.innerHTML = `
+            <div class="space-y-3 flex flex-col items-center">
+                <p class="text-xs font-semibold text-gray-600">Scan Barcode QRIS di bawah menggunakan GoPay, OVO, Dana, atau M-Banking:</p>
+                <!-- Simulasi Barcode menggunakan gambar placeholder QR -->
+                <div class="bg-white p-3 border-2 border-dashed border-amber-500 rounded-2xl inline-block shadow-xs">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=COPAS-ERP-PAYMENT-${ord.id}-${ord.total}" alt="QRIS Barcode" class="w-36 h-36 mx-auto">
+                </div>
+                <p class="text-xs text-amber-700 font-bold">NMID: ID102938475692 - Warung Copas</p>
+                <button onclick="finalizePayment('${ord.id}', 'QRIS')" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Konfirmasi Pembayaran Berhasil</button>
+            </div>
+        `;
+    } else if (method === 'Transfer') {
+        actionArea.innerHTML = `
+            <div class="space-y-3 text-left bg-gray-50 p-3 rounded-xl border text-xs">
+                <p class="font-bold text-gray-700">Silakan Transfer ke Rekening Warung Copas:</p>
+                <p>Bank BCA: <b class="text-amber-700">1234-5678-90</b> (a.n. Warung Copas)</p>
+                <button onclick="finalizePayment('${ord.id}', 'Transfer Bank')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm mt-2">Konfirmasi Mutasi Masuk</button>
+            </div>
+        `;
+    }
+}
+
+// Proses Pembayaran Tunai dengan Hitung Kembalian
+function processCashPayment(orderId, total) {
+    const given = parseInt(document.getElementById('cash-given').value);
+    if (isNaN(given) || given < total) {
+        showToast('Jumlah uang tunai kurang dari total tagihan!', 'error');
+        return;
+    }
+    const change = given - total;
+    finalizePayment(orderId, `Tunai (Kembalian: Rp ${change.toLocaleString()})`);
+}
+
+// Finalisasi Transaksi
+function finalizePayment(orderId, methodInfo) {
+    orders = orders.filter(o => o.id !== orderId);
+    document.getElementById('global-modal').classList.add('hidden');
+    showToast(`Pembayaran ${orderId} lunas via ${methodInfo}! Struk berhasil dicetak.`, 'success');
+    renderContent('kasir-transaksi');
+}
 
         // 5. Konfirmasi & Pembatalan Booking (Kasir)
         function updateReservationStatus(code, status) {
