@@ -329,14 +329,19 @@ function selectBookingQRIS(code, type, amount) {
 function finalizeBookingPayment(code, type, method, amount) {
     const res = reservations.find(r => r.code === code);
     if (res) {
-        if (type === 'Lunas') {
-            res.status = 'Lunas'; // Status lunas akan otomatis memfilternya keluar dari daftar aktif
+        // Jika pembayarannya Lunas atau Pelunasan sisa tagihan, ubah status jadi 'Lunas'
+        if (type === 'Lunas' || type === 'Pelunasan') {
+            res.status = 'Lunas'; 
         } else {
             res.status = 'DP 50% (Confirmed)';
         }
     }
+    
+    // Tutup modal dan tampilkan notifikasi sukses
     document.getElementById('global-modal').classList.add('hidden');
     showToast(`Pembayaran ${type} reservasi ${code} via ${method} (Rp ${amount.toLocaleString()}) berhasil!`, 'success');
+    
+    // Render ulang halaman kasir booking agar data yang sudah lunas otomatis hilang dari daftar
     renderContent('kasir-booking');
 }
 
