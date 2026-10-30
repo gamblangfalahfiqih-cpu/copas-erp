@@ -189,75 +189,85 @@
 
 
         // 2. Modal Pembayaran dengan Pilihan DP (50%) atau Lunas
+// 1. Fungsi Modal Pembayaran Cerdas (DP atau Pelunasan)
 function openBookingPaymentModal(code) {
     const res = reservations.find(r => r.code === code);
     if (!res) return;
 
-    // Total estimasi tagihan meja / reservasi standar (misal Rp 100.000)
     const totalBill = 100000; 
-    const dpAmount = totalBill * 0.5; // Hitung otomatis 50%
+    const dpAmount = totalBill * 0.5; 
+    const isAlreadyDP = res.status === 'DP 50% (Confirmed)';
 
     const modal = document.getElementById('global-modal');
     const box = document.getElementById('modal-box');
 
-    box.innerHTML = `
-        <div class="text-center space-y-4">
-            <h3 class="font-bold text-lg text-gray-800">Pilih Jenis Pembayaran Reservasi</h3>
-            <p class="text-sm text-gray-500">Kode Booking: <b>${res.code}</b> (${res.name})</p>
-            
-            <div class="grid grid-cols-2 gap-3 pt-2">
-                <button onclick="selectBookingType('${res.code}', 'DP', ${dpAmount})" class="p-4 border-2 border-amber-500 bg-amber-50 rounded-2xl text-left transition-all">
-                    <div class="text-xs font-semibold text-gray-500 uppercase">Down Payment</div>
-                    <div class="text-lg font-extrabold text-amber-700">Rp ${dpAmount.toLocaleString()}</div>
-                    <div class="text-[10px] text-amber-600 mt-1">Perhitungan 50% dari total</div>
-                </button>
-                <button onclick="selectBookingType('${res.code}', 'Lunas', ${totalBill})" class="p-4 border-2 border-emerald-500 bg-emerald-50 rounded-2xl text-left transition-all">
-                    <div class="text-xs font-semibold text-gray-500 uppercase">Bayar Lunas</div>
-                    <div class="text-lg font-extrabold text-emerald-700">Rp ${totalBill.toLocaleString()}</div>
-                    <div class="text-[10px] text-emerald-600 mt-1">Pelunasan 100% di awal</div>
-                </button>
-            </div>
+    if (isAlreadyDP) {
+        box.innerHTML = `
+            <div class="text-center space-y-4">
+                <h3 class="font-bold text-lg text-gray-800">Pelunasan Sisa Tagihan Reservasi</h3>
+                <p class="text-sm text-gray-500">Kode Booking: <b>${res.code}</b> (${res.name})</p>
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-800">
+                    Status saat ini: <b>DP 50% Sudah Dibayar</b>. Sisa tagihan pelunasan:
+                </div>
+                
+                <div class="pt-2">
+                    <button onclick="selectBookingType('${res.code}', 'Pelunasan', ${dpAmount})" class="w-full p-4 border-2 border-emerald-500 bg-emerald-50 rounded-2xl text-left transition-all shadow-xs">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Pelunasan Sisa Tagihan (50%)</div>
+                        <div class="text-xl font-extrabold text-emerald-700">Rp ${dpAmount.toLocaleString()}</div>
+                        <div class="text-[10px] text-emerald-600 mt-1">Klik untuk memilih metode pembayaran pelunasan</div>
+                    </button>
+                </div>
 
-            <div id="booking-method-container" class="mt-4 pt-4 border-t hidden">
-                <!-- Pilihan metode bayar & barcode muncul di sini -->
-            </div>
+                <div id="booking-method-container" class="mt-4 pt-4 border-t hidden"></div>
 
-            <div class="flex justify-end gap-2 pt-4">
-                <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
+                <div class="flex justify-end gap-2 pt-4">
+                    <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    } else {
+        box.innerHTML = `
+            <div class="text-center space-y-4">
+                <h3 class="font-bold text-lg text-gray-800">Pilih Jenis Pembayaran Reservasi</h3>
+                <p class="text-sm text-gray-500">Kode Booking: <b>${res.code}</b> (${res.name})</p>
+                
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="selectBookingType('${res.code}', 'DP', ${dpAmount})" class="p-4 border-2 border-amber-500 bg-amber-50 rounded-2xl text-left transition-all">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Down Payment</div>
+                        <div class="text-lg font-extrabold text-amber-700">Rp ${dpAmount.toLocaleString()}</div>
+                        <div class="text-[10px] text-amber-600 mt-1">Perhitungan 50% dari total</div>
+                    </button>
+                    <button onclick="selectBookingType('${res.code}', 'Lunas', ${totalBill})" class="p-4 border-2 border-emerald-500 bg-emerald-50 rounded-2xl text-left transition-all">
+                        <div class="text-xs font-semibold text-gray-500 uppercase">Bayar Lunas</div>
+                        <div class="text-lg font-extrabold text-emerald-700">Rp ${totalBill.toLocaleString()}</div>
+                        <div class="text-[10px] text-emerald-600 mt-1">Pelunasan 100% di awal</div>
+                    </button>
+                </div>
+
+                <div id="booking-method-container" class="mt-4 pt-4 border-t hidden"></div>
+
+                <div class="flex justify-end gap-2 pt-4">
+                    <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm">Tutup</button>
+                </div>
+            </div>
+        `;
+    }
     modal.classList.remove('hidden');
 }
 
-// 3. Menampilkan Metode Pembayaran (Tunai / QRIS / Transfer) setelah pilih DP/Lunas
-function selectBookingType(code, type, amount) {
-    const container = document.getElementById('booking-method-container');
-    container.classList.remove('hidden');
-
-    container.innerHTML = `
-        <div class="space-y-3">
-            <p class="text-xs font-bold text-gray-700">Metode Pembayaran untuk (${type}): <span class="text-amber-700">Rp ${amount.toLocaleString()}</span></p>
-            <div class="grid grid-cols-3 gap-2">
-                <button onclick="finalizeBookingPayment('${code}', '${type}', 'Tunai', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-gray-100">💵 Tunai</button>
-                <button onclick="selectBookingQRIS('${code}', '${type}', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-gray-100">📱 QRIS</button>
-                <button onclick="finalizeBookingPayment('${code}', '${type}', 'Transfer Bank', ${amount})" class="p-2.5 border rounded-xl font-semibold text-xs hover:bg-gray-100">💳 Transfer</button>
-            </div>
-            <div id="booking-qris-area"></div>
-        </div>
-    `;
-}
-
-// 4. Munculkan Barcode QRIS khusus Booking
-function selectBookingQRIS(code, type, amount) {
-    const qrisArea = document.getElementById('booking-qris-area');
-    qrisArea.innerHTML = `
-        <div class="mt-3 flex flex-col items-center space-y-2 bg-gray-50 p-3 rounded-xl border">
-            <p class="text-xs text-gray-600">Scan Barcode QRIS (${type}):</p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=BOOKING-${code}-${type}-${amount}" class="w-32 h-32">
-            <button onclick="finalizeBookingPayment('${code}', '${type}', 'QRIS', ${amount})" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-xs font-semibold shadow-sm">Konfirmasi Pembayaran QRIS Sukses</button>
-        </div>
-    `;
+// 2. Fungsi Finalisasi Pembayaran (Pastikan posisi fungsi ini di luar fungsi openBookingPaymentModal)
+function finalizeBookingPayment(code, type, method, amount) {
+    const res = reservations.find(r => r.code === code);
+    if (res) {
+        if (type === 'Lunas' || type === 'Pelunasan') {
+            res.status = 'Lunas'; // Otomatis menyembunyikan data dari halaman kasir
+        } else {
+            res.status = 'DP 50% (Confirmed)';
+        }
+    }
+    document.getElementById('global-modal').classList.add('hidden');
+    showToast(`Pembayaran ${type} reservasi ${code} via ${method} (Rp ${amount.toLocaleString()}) berhasil!`, 'success');
+    renderContent('kasir-booking');
 }
 
 // 5. Finalisasi Pembayaran & Membersihkan Halaman jika Lunas
