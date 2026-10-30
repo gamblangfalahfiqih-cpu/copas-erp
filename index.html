@@ -259,8 +259,9 @@ function openBookingPaymentModal(code) {
 function finalizeBookingPayment(code, type, method, amount) {
     const res = reservations.find(r => r.code === code);
     if (res) {
+        // PERBAIKAN: Jika jenis pembayarannya 'Lunas' ATAU 'Pelunasan', ubah status menjadi 'Lunas'
         if (type === 'Lunas' || type === 'Pelunasan') {
-            res.status = 'Lunas'; // Otomatis menyembunyikan data dari halaman kasir
+            res.status = 'Lunas'; // Otomatis membersihkan data dari halaman kasir aktif
         } else {
             res.status = 'DP 50% (Confirmed)';
         }
