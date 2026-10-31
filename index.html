@@ -309,9 +309,10 @@
                                 <h1 class="text-2xl font-bold text-gray-900">Dashboard Pemilik / Admin</h1>
                                 <p class="text-sm text-gray-500">Monitoring real-time operasional Warung Copas.</p>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button onclick="switchTab('admin-laporan')" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-xs flex items-center gap-2"><i class="fa-solid fa-file-arrow-down"></i> Unduh Laporan</button>
-                                <button onclick="renderContent('dash-admin'); showToast('Dashboard disinkronkan', 'success')" class="bg-white border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-medium text-gray-700 shadow-xs flex items-center gap-2"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button onclick="openMenuModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> Tambah Menu</button>
+                                <button onclick="switchTab('admin-laporan')" class="bg-gray-900 hover:bg-black text-white px-3.5 py-2 rounded-xl text-xs font-semibold shadow-xs flex items-center gap-1.5"><i class="fa-solid fa-file-arrow-down"></i> Unduh Laporan</button>
+                                <button onclick="renderContent('dash-admin'); showToast('Dashboard disinkronkan', 'success')" class="bg-white border border-gray-300 hover:bg-gray-50 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 shadow-xs flex items-center gap-1.5"><i class="fa-solid fa-rotate"></i> Refresh</button>
                             </div>
                         </div>
 
@@ -359,10 +360,10 @@
                             </div>
                         </div>
 
-                        <!-- Tambahan Fitur Baru: Tabel Aktivitas Pesanan Terbaru -->
+                        <!-- Monitor Pesanan Aktif Terbaru dengan Tombol Aksi Cepat -->
                         <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
                             <div class="p-5 border-b border-gray-200 flex items-center justify-between">
-                                <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-clock-rotate-left text-amber-600 mr-2"></i> Monitor Pesanan Aktif Terbaru</h3>
+                                <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-clock-rotate-left text-amber-600 mr-2"></i> Monitor Pesanan Aktif & Aksi Cepat</h3>
                                 <span class="text-xs bg-amber-50 text-amber-700 font-semibold px-3 py-1 rounded-full border border-amber-200">${orders.length} Pesanan Berjalan</span>
                             </div>
                             <table class="w-full text-left border-collapse text-sm">
@@ -373,16 +374,23 @@
                                         <th class="p-4">Daftar Menu</th>
                                         <th class="p-4">Total</th>
                                         <th class="p-4">Status</th>
+                                        <th class="p-4 text-center">Aksi Cepat</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
-                                    ${orders.length === 0 ? '<tr><td colspan="5" class="p-6 text-center text-gray-400">Tidak ada pesanan aktif saat ini.</td></tr>' : orders.map(o => `
+                                    ${orders.length === 0 ? '<tr><td colspan="6" class="p-6 text-center text-gray-400">Tidak ada pesanan aktif saat ini.</td></tr>' : orders.map(o => `
                                         <tr class="hover:bg-gray-50">
                                             <td class="p-4 font-bold text-amber-700">${o.id}</td>
                                             <td class="p-4 font-semibold text-gray-800">${o.table}<div class="text-xs text-gray-400 font-normal">${o.customer}</div></td>
                                             <td class="p-4 text-gray-600 text-xs">${o.items}</td>
                                             <td class="p-4 font-bold text-gray-800">Rp ${o.total.toLocaleString()}</td>
                                             <td class="p-4"><span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full">${o.status}</span></td>
+                                            <td class="p-4 text-center space-x-1">
+                                                ${o.status === 'Menunggu' ? `<button onclick="updateOrderStatus('${o.id}', 'Diproses'); renderContent('dash-admin');" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Proses</button>` : ''}
+                                                ${o.status === 'Diproses' ? `<button onclick="updateOrderStatus('${o.id}', 'Siap Saji'); renderContent('dash-admin');" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Siap Saji</button>` : ''}
+                                                ${o.status === 'Siap Saji' ? `<button onclick="markServed('${o.id}'); renderContent('dash-admin');" class="bg-gray-800 hover:bg-gray-900 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Selesai</button>` : ''}
+                                                <button onclick="cancelOrder('${o.id}'); renderContent('dash-admin');" class="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded-lg text-xs font-semibold">Batal</button>
+                                            </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
