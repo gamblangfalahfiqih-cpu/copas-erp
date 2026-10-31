@@ -139,18 +139,10 @@
         let salesChartInstance = null;
 
         // Dataset dengan localStorage persistence agar data tidak hilang saat refresh
-        let menus = JSON.parse(localStorage.getItem('copas_menus')) || [
-            { id: 1, name: 'Kopi Susu Gula Aren', cat: 'Minuman', price: 18000, stock: 'Aman', img: 'https://placehold.co/100x100/f59e0b/ffffff?text=Kopi' },
-            { id: 2, name: 'Mie Instan Copas Special', cat: 'Makanan', price: 15000, stock: 'Aman', img: 'https://placehold.co/100x100/ef4444/ffffff?text=Mie' },
-            { id: 3, name: 'Roti Bakar Coklat Keju', cat: 'Snack', price: 14000, stock: 'Aman', img: 'https://placehold.co/100x100/10b981/ffffff?text=Roti' },
-            { id: 4, name: 'Es Teh Manis Jumbo', cat: 'Minuman', price: 6000, stock: 'Aman', img: 'https://placehold.co/100x100/3b82f6/ffffff?text=Teh' }
-        ];
+        // Dataset dengan localStorage persistence (Dimulai dalam keadaan kosong / bersih)
+        let menus = JSON.parse(localStorage.getItem('copas_menus')) || [];
 
-        let orders = JSON.parse(localStorage.getItem('copas_orders')) || [
-            { id: 'ORD-001', table: 'Meja 03', customer: 'Rian Putra', items: '2x Kopi Susu Aren, 1x Mie Copas', total: 51000, status: 'Siap Saji', time: '10:45 WIB' },
-            { id: 'ORD-002', table: 'Meja 05', customer: 'Siti Aminah', items: '1x Roti Bakar, 2x Es Teh', total: 26000, status: 'Diproses', time: '11:02 WIB' },
-            { id: 'ORD-003', table: 'VIP 01', customer: 'Yoga Pratama', items: '3x Kopi Susu Aren', total: 54000, status: 'Menunggu', time: '11:15 WIB' }
-        ];
+        let orders = JSON.parse(localStorage.getItem('copas_orders')) || [];
 
         let employees = JSON.parse(localStorage.getItem('copas_employees')) || [
             { id: 'EMP-01', name: 'Ahmad Administrator', role: 'Admin', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
@@ -160,10 +152,7 @@
             { id: 'EMP-05', name: 'Dewi Waiter', role: 'Pelayan', shift: 'Shift Siang (14:00 - 22:00)', status: 'Aktif' }
         ];
 
-        let reservations = JSON.parse(localStorage.getItem('copas_reservations')) || [
-            { code: 'COP-8821', name: 'Dimas Anggara', date: '2026-06-06', time: '19:00', pax: 4, table: 'Meja Utama 02', status: 'Confirmed', phone: '081234567890' },
-            { code: 'COP-8822', name: 'Rahmat Hidayat', date: '2026-06-06', time: '20:00', pax: 6, table: 'Area Outdoor 04', status: 'Pending', phone: '089876543210' }
-        ];
+        let reservations = JSON.parse(localStorage.getItem('copas_reservations')) || [];
 
         let ingredients = JSON.parse(localStorage.getItem('copas_ingredients')) || [
             { code: 'ING-01', name: 'Biji Kopi Robusta', stock: 12, min: 5, unit: 'Kg', supplier: 'PT Kopi Nusantara' },
@@ -171,6 +160,8 @@
             { code: 'ING-03', name: 'Gula Aren Cair', stock: 15, min: 5, unit: 'Liter', supplier: 'UD Manis Jaya' },
             { code: 'ING-04', name: 'Mie Instan Goreng', stock: 45, min: 20, unit: 'Pcs', supplier: 'Toko Berkah' }
         ];
+
+        
 
         let attendanceState = JSON.parse(localStorage.getItem('copas_attendance')) || { status: 'Belum Presensi', clockIn: '-', clockOut: '-' };
         let activeCart = [];
