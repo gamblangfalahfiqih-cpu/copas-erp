@@ -176,6 +176,119 @@
         let activeCart = [];
         let activeTab = '';
 
+        // Fungsi Membuka Modal Update Stok Bahan Baku
+        function openUpdateStockModal(code) {
+            const ing = ingredients.find(i => i.code === code);
+            if (!ing) return;
+
+            const modal = document.getElementById('global-modal');
+            const box = document.getElementById('modal-box');
+
+            box.innerHTML = `
+                <div class="space-y-4">
+                    <h3 class="font-bold text-lg text-gray-800">Update Stok: ${ing.name}</h3>
+                    <p class="text-xs text-gray-500">Ubah jumlah stok saat ini atau batas minimum peringatan.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Stok Baru (${ing.unit})</label>
+                            <input type="number" id="up-stock" value="${ing.stock}" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Batas Minimum Stok</label>
+                            <input type="number" id="up-min" value="${ing.min}" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm font-medium">Batal</button>
+                        <button onclick="saveUpdatedStock('${ing.code}')" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-xl text-sm font-semibold">Simpan Perubahan</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function saveUpdatedStock(code) {
+            const ing = ingredients.find(i => i.code === code);
+            if (ing) {
+                ing.stock = parseInt(document.getElementById('up-stock').value) || 0;
+                ing.min = parseInt(document.getElementById('up-min').value) || 0;
+                saveData();
+                document.getElementById('global-modal').classList.add('hidden');
+                renderContent('admin-inventaris');
+                showToast(`Stok ${ing.name} berhasil diperbarui.`, 'success');
+            }
+        }
+
+        // Fungsi Tambah Bahan Baku Baru
+        function openAddIngredientModal() {
+            const modal = document.getElementById('global-modal');
+            const box = document.getElementById('modal-box');
+
+            box.innerHTML = `
+                <div class="space-y-4">
+                    <h3 class="font-bold text-lg text-gray-800">Tambah Bahan Baku Baru</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nama Bahan Baku</label>
+                            <input type="text" id="ing-name" placeholder="Cth. Keju Mozzarella" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Stok Awal</label>
+                                <input type="number" id="ing-stock" value="10" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Batas Minimum</label>
+                                <input type="number" id="ing-min" value="3" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Satuan (Kg / Liter / Pcs)</label>
+                            <input type="text" id="ing-unit" value="Kg" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nama Supplier</label>
+                            <input type="text" id="ing-supplier" placeholder="Cth. UD Supplier Jaya" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nomor WhatsApp Supplier</label>
+                            <input type="text" id="ing-phone" placeholder="Cth. 628123456789" class="w-full bg-gray-50 border rounded-xl px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button onclick="document.getElementById('global-modal').classList.add('hidden')" class="px-4 py-2 border rounded-xl text-sm font-medium">Batal</button>
+                        <button onclick="saveNewIngredient()" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-xl text-sm font-semibold">Simpan Bahan</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function saveNewIngredient() {
+            const name = document.getElementById('ing-name').value;
+            const stock = parseInt(document.getElementById('ing-stock').value) || 0;
+            const min = parseInt(document.getElementById('ing-min').value) || 0;
+            const unit = document.getElementById('ing-unit').value || 'Pcs';
+            const supplier = document.getElementById('ing-supplier').value || 'Supplier Umum';
+            const phone = document.getElementById('ing-phone').value || '6281234567890';
+
+            if (!name) {
+                showToast('Mohon masukkan nama bahan baku.', 'error');
+                return;
+            }
+
+            const newCode = 'ING-0' + (ingredients.length + 1);
+            ingredients.push({ code: newCode, name, stock, min, unit, supplier, phone });
+            saveData();
+            document.getElementById('global-modal').classList.add('hidden');
+            renderContent('admin-inventaris');
+            showToast(`Bahan baku ${name} berhasil ditambahkan.`, 'success');
+        }
+        
+
         // Fungsi Global untuk Menyimpan Perubahan ke LocalStorage
         function saveData() {
             localStorage.setItem('copas_menus', JSON.stringify(menus));
@@ -597,25 +710,60 @@
                             </div>
                         </div>
                     `;
+
+
                 } else if (id === 'admin-inventaris') {
                     c.innerHTML = `
                         <div class="space-y-6">
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-900">Monitoring Inventaris Bahan Baku</h1>
-                                <p class="text-sm text-gray-500">Pengawasan stok bahan baku harian.</p>
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <h1 class="text-2xl font-bold text-gray-900">Manajemen & Monitoring Inventaris Bahan Baku</h1>
+                                    <p class="text-sm text-gray-500">Pengawasan stok harian, update stok, dan pemesanan cepat via WhatsApp ke supplier.</p>
+                                </div>
+                                <button onclick="openAddIngredientModal()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2">
+                                    <i class="fa-solid fa-plus"></i> Tambah Bahan Baku
+                                </button>
                             </div>
-                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+
+                            <!-- Tabel Inventaris Interaktif -->
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
                                 <table class="w-full text-left border-collapse text-sm">
-                                    <thead class="bg-gray-50 border-b text-xs text-gray-500 uppercase">
-                                        <tr><th class="p-4">Bahan Baku</th><th class="p-4">Stok</th><th class="p-4">Minimum</th><th class="p-4">Supplier</th></tr>
+                                    <thead class="bg-gray-50 border-b text-xs font-semibold text-gray-500 uppercase">
+                                        <tr>
+                                            <th class="p-4">Kode & Bahan Baku</th>
+                                            <th class="p-4">Stok Saat Ini</th>
+                                            <th class="p-4">Batas Minimum</th>
+                                            <th class="p-4">Supplier & WhatsApp</th>
+                                            <th class="p-4 text-center">Aksi Interaktif</th>
+                                        </tr>
                                     </thead>
-                                    <tbody class="divide-y">
+                                    <tbody class="divide-y divide-gray-100">
                                         ${ingredients.map(i => `
-                                            <tr>
-                                                <td class="p-4 font-semibold">${i.name}</td>
-                                                <td class="p-4 font-bold ${i.stock < i.min ? 'text-red-600' : 'text-gray-800'}">${i.stock} ${i.unit}</td>
-                                                <td class="p-4 text-gray-500">${i.min} ${i.unit}</td>
-                                                <td class="p-4 text-gray-600">${i.supplier}</td>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="p-4">
+                                                    <span class="font-bold text-gray-800">${i.name}</span>
+                                                    <div class="text-xs text-gray-400">${i.code}</div>
+                                                </td>
+                                                <td class="p-4">
+                                                    <span class="font-bold ${i.stock < i.min ? 'text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-200 text-xs' : 'text-gray-800'}">
+                                                        ${i.stock} ${i.unit}
+                                                    </span>
+                                                </td>
+                                                <td class="p-4 text-gray-500 font-medium">${i.min} ${i.unit}</td>
+                                                <td class="p-4">
+                                                    <div class="font-semibold text-gray-800">${i.supplier}</div>
+                                                    <a href="https://wa.me/${i.phone || '6281234567890'}?text=Halo%20${encodeURIComponent(i.supplier)},%20kami%20ingin%20memesan%20kembali%20stok%20${encodeURIComponent(i.name)}%20untuk%20Warung%20Copas." target="_blank" class="text-xs text-emerald-600 hover:underline font-medium inline-flex items-center gap-1 mt-0.5">
+                                                        <i class="fa-brands fa-whatsapp"></i> ${i.phone || '0812-3456-7890'}
+                                                    </a>
+                                                </td>
+                                                <td class="p-4 text-center space-x-1">
+                                                    <button onclick="openUpdateStockModal('${i.code}')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs">
+                                                        <i class="fa-solid fa-pen-to-square"></i> Update Stok
+                                                    </button>
+                                                    <a href="https://wa.me/${i.phone || '6281234567890'}?text=Halo%20${encodeURIComponent(i.supplier)},%20kami%20ingin%20memesan%20stok%20${encodeURIComponent(i.name)}." target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow-xs inline-block">
+                                                        <i class="fa-brands fa-whatsapp"></i> Pesan
+                                                    </a>
+                                                </td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -623,6 +771,9 @@
                             </div>
                         </div>
                     `;
+
+
+
                 } else if (id === 'admin-reservasi') {
                     c.innerHTML = `
                         <div class="space-y-6">
