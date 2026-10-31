@@ -459,15 +459,13 @@
                                 <h3 class="text-lg font-bold text-gray-800 mb-4">Grafik Penjualan Mingguan Warung Copas</h3>
                                 <canvas id="adminSalesChart" height="110"></canvas>
                             </div>
-
-
                             <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs flex flex-col justify-between">
                                 <div>
                                     <h3 class="text-lg font-bold text-gray-800 mb-2">Peringatan Inventaris Dapur</h3>
                                     <div class="space-y-3 mt-4 max-h-56 overflow-y-auto">
                                         ${ingredients.filter(i => i.stock < i.min).length === 0 ? `
                                             <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-xs text-emerald-800 font-semibold text-center">
-                                                <i class="fa-solid fa-circle-check text-base mb-1 block"></i> Semua stok bahan baku aman dan di atas batas minimum.
+                                                <i class="fa-solid fa-circle-check text-base mb-1 block"></i> Semua stok bahan baku aman.
                                             </div>
                                         ` : ingredients.filter(i => i.stock < i.min).map(i => `
                                             <div class="bg-red-50 border border-red-200 p-3.5 rounded-xl space-y-1">
@@ -489,89 +487,92 @@
                                     <button onclick="switchTab('admin-inventaris')" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 rounded-xl text-sm font-semibold shadow-sm">Kelola Inventaris</button>
                                 </div>
                             </div>
-
-                        <!-- 1. Monitor Pesanan Aktif & Aksi Cepat -->
-                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-                            <div class="p-5 border-b border-gray-200 flex items-center justify-between">
-                                <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-clock-rotate-left text-amber-600 mr-2"></i> Monitor Pesanan Aktif & Aksi Cepat</h3>
-                                <span class="text-xs bg-amber-50 text-amber-700 font-semibold px-3 py-1 rounded-full border border-amber-200">${orders.length} Pesanan Berjalan</span>
-                            </div>
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase border-b">
-                                    <tr>
-                                        <th class="p-4">ID Pesanan</th>
-                                        <th class="p-4">Meja / Pelanggan</th>
-                                        <th class="p-4">Daftar Menu</th>
-                                        <th class="p-4">Total</th>
-                                        <th class="p-4">Status</th>
-                                        <th class="p-4 text-center">Aksi Cepat</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    ${orders.length === 0 ? '<tr><td colspan="6" class="p-6 text-center text-gray-400">Tidak ada pesanan aktif saat ini.</td></tr>' : orders.map(o => `
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="p-4 font-bold text-amber-700">${o.id}</td>
-                                            <td class="p-4 font-semibold text-gray-800">${o.table}<div class="text-xs text-gray-400 font-normal">${o.customer}</div></td>
-                                            <td class="p-4 text-gray-600 text-xs">${o.items}</td>
-                                            <td class="p-4 font-bold text-gray-800">Rp ${o.total.toLocaleString()}</td>
-                                            <td class="p-4"><span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full">${o.status}</span></td>
-                                            <td class="p-4 text-center space-x-1">
-                                                ${o.status === 'Menunggu' ? `<button onclick="updateOrderStatus('${o.id}', 'Diproses'); renderContent('dash-admin');" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Proses</button>` : ''}
-                                                ${o.status === 'Diproses' ? `<button onclick="updateOrderStatus('${o.id}', 'Siap Saji'); renderContent('dash-admin');" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Siap Saji</button>` : ''}
-                                                ${o.status === 'Siap Saji' ? `<button onclick="markServed('${o.id}'); renderContent('dash-admin');" class="bg-gray-800 hover:bg-gray-900 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Selesai</button>` : ''}
-                                                <button onclick="cancelOrder('${o.id}'); renderContent('dash-admin');" class="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded-lg text-xs font-semibold">Batal</button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
                         </div>
 
-                        <!-- 2. REKAP PRESENSI BULANAN KARYAWAN -->
-                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-                            <div class="p-5 border-b border-gray-200 flex items-center justify-between">
-                                <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-calendar-days text-amber-600 mr-2"></i> Ringkasan Rekap Presensi Bulanan Karyawan</h3>
-                                <button onclick="switchTab('admin-presensi')" class="text-xs text-amber-700 font-semibold hover:underline">Lihat Rekap Lengkap &rarr;</button>
-                            </div>
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase border-b">
-                                    <tr>
-                                        <th class="p-4">Nama Pegawai & Role</th>
-                                        <th class="p-4 text-center">Hadir</th>
-                                        <th class="p-4 text-center">Sakit</th>
-                                        <th class="p-4 text-center">Izin</th>
-                                        <th class="p-4 text-center">Alpa</th>
-                                        <th class="p-4 text-center">Persentase Kehadiran</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    ${employees.map((e, idx) => {
-                                        // Simulasi data rekap bulanan yang rapi untuk tiap pegawai
-                                        const hadir = 20 + (idx % 3);
-                                        const sakit = idx === 1 ? 1 : 0;
-                                        const izin = idx === 3 ? 1 : 0;
-                                        const alpa = 0;
-                                        const persentase = Math.round(((hadir) / 22) * 100);
-                                        return `
+                        <!-- BAGIAN BAWAH: Disusun 1 Kolom Full Width Kebawah agar Tidak Sempit -->
+                        <div class="grid grid-cols-1 gap-6">
+                            <!-- 1. Monitor Pesanan Aktif & Aksi Cepat -->
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                                <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+                                    <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-clock-rotate-left text-amber-600 mr-2"></i> Monitor Pesanan Aktif & Aksi Cepat</h3>
+                                    <span class="text-xs bg-amber-50 text-amber-700 font-semibold px-3 py-1 rounded-full border border-amber-200">${orders.length} Pesanan Berjalan</span>
+                                </div>
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase border-b">
+                                        <tr>
+                                            <th class="p-4">ID Pesanan</th>
+                                            <th class="p-4">Meja / Pelanggan</th>
+                                            <th class="p-4">Daftar Menu</th>
+                                            <th class="p-4">Total</th>
+                                            <th class="p-4">Status</th>
+                                            <th class="p-4 text-center">Aksi Cepat</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        ${orders.length === 0 ? '<tr><td colspan="6" class="p-6 text-center text-gray-400">Tidak ada pesanan aktif saat ini.</td></tr>' : orders.map(o => `
                                             <tr class="hover:bg-gray-50">
-                                                <td class="p-4 font-semibold text-gray-800">
-                                                    ${e.name}
-                                                    <div class="text-xs text-gray-400 font-normal">${e.role} — ${e.shift}</div>
-                                                </td>
-                                                <td class="p-4 text-center font-bold text-emerald-600">${hadir} Hari</td>
-                                                <td class="p-4 text-center font-medium text-amber-600">${sakit} Hari</td>
-                                                <td class="p-4 text-center font-medium text-blue-600">${izin} Hari</td>
-                                                <td class="p-4 text-center font-medium text-red-600">${alpa} Hari</td>
-                                                <td class="p-4 text-center">
-                                                    <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-                                                        ${persentase}% (Baik)
-                                                    </span>
+                                                <td class="p-4 font-bold text-amber-700">${o.id}</td>
+                                                <td class="p-4 font-semibold text-gray-800">${o.table}<div class="text-xs text-gray-400 font-normal">${o.customer}</div></td>
+                                                <td class="p-4 text-gray-600 text-xs">${o.items}</td>
+                                                <td class="p-4 font-bold text-gray-800">Rp ${o.total.toLocaleString()}</td>
+                                                <td class="p-4"><span class="px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full">${o.status}</span></td>
+                                                <td class="p-4 text-center space-x-1">
+                                                    ${o.status === 'Menunggu' ? `<button onclick="updateOrderStatus('${o.id}', 'Diproses'); renderContent('dash-admin');" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Proses</button>` : ''}
+                                                    ${o.status === 'Diproses' ? `<button onclick="updateOrderStatus('${o.id}', 'Siap Saji'); renderContent('dash-admin');" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Siap Saji</button>` : ''}
+                                                    ${o.status === 'Siap Saji' ? `<button onclick="markServed('${o.id}'); renderContent('dash-admin');" class="bg-gray-800 hover:bg-gray-900 text-white px-2.5 py-1 rounded-lg text-xs font-semibold">Selesai</button>` : ''}
+                                                    <button onclick="cancelOrder('${o.id}'); renderContent('dash-admin');" class="bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded-lg text-xs font-semibold">Batal</button>
                                                 </td>
                                             </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- 2. Ringkasan Rekap Presensi Bulanan Karyawan -->
+                            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                                <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+                                    <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-calendar-days text-amber-600 mr-2"></i> Ringkasan Rekap Presensi Bulanan Karyawan</h3>
+                                    <button onclick="switchTab('admin-presensi')" class="text-xs text-amber-700 font-semibold hover:underline">Lihat Rekap Lengkap &rarr;</button>
+                                </div>
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead class="bg-gray-50 text-xs font-semibold text-gray-500 uppercase border-b">
+                                        <tr>
+                                            <th class="p-4">Nama Pegawai & Role</th>
+                                            <th class="p-4 text-center">Hadir</th>
+                                            <th class="p-4 text-center">Sakit</th>
+                                            <th class="p-4 text-center">Izin</th>
+                                            <th class="p-4 text-center">Alpa</th>
+                                            <th class="p-4 text-center">Persentase Kehadiran</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        ${employees.map((e, idx) => {
+                                            const hadir = 20 + (idx % 3);
+                                            const sakit = idx === 1 ? 1 : 0;
+                                            const izin = idx === 3 ? 1 : 0;
+                                            const alpa = 0;
+                                            const persentase = Math.round(((hadir) / 22) * 100);
+                                            return `
+                                                <tr class="hover:bg-gray-50">
+                                                    <td class="p-4 font-semibold text-gray-800">
+                                                        ${e.name}
+                                                        <div class="text-xs text-gray-400 font-normal">${e.role} — ${e.shift}</div>
+                                                    </td>
+                                                    <td class="p-4 text-center font-bold text-emerald-600">${hadir} Hari</td>
+                                                    <td class="p-4 text-center font-medium text-amber-600">${sakit} Hari</td>
+                                                    <td class="p-4 text-center font-medium text-blue-600">${izin} Hari</td>
+                                                    <td class="p-4 text-center font-medium text-red-600">${alpa} Hari</td>
+                                                    <td class="p-4 text-center">
+                                                        <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+                                                            ${persentase}% (Baik)
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                     </div>
