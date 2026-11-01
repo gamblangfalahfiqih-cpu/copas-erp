@@ -1116,28 +1116,65 @@
                             <div class="max-w-xl space-y-4">
                                 <span class="px-3 py-1 bg-amber-500/30 text-amber-200 rounded-full text-xs font-semibold">Warung Copas Publik</span>
                                 <h1 class="text-3xl font-extrabold">Kopi Nikmat, Tempat Nyaman, Harga Bersahabat</h1>
-                                <p class="text-amber-100 text-sm">Nikmati suasana santai Warung Copas dan lakukan reservasi tempat secara online.</p>
+                                <p class="text-amber-100 text-sm">Nikmati suasana santai Warung Copas, pilih menu favorit langsung, atau lakukan reservasi tempat secara online.</p>
                                 <button onclick="switchTab('pelanggan-booking')" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg">Booking Meja Online</button>
                             </div>
                         </div>
+
+                        <!-- Bagian Daftar Menu & Keranjang Pelanggan (Serupa Pelayan) -->
                         <div>
-                            <h2 class="text-xl font-bold text-gray-900 mb-4">Daftar Menu Warung Copas</h2>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                ${menus.map(m => `
-                                    <div class="bg-white rounded-2xl border overflow-hidden flex flex-col">
-                                        <img src="${m.img}" class="w-full h-40 object-cover">
-                                        <div class="p-4 flex-1 flex flex-col justify-between">
-                                            <div>
-                                                <span class="text-xs font-semibold text-amber-600">${m.cat}</span>
-                                                <h3 class="font-bold text-gray-800 mt-1">${m.name}</h3>
-                                            </div>
-                                            <div class="mt-4 flex items-center justify-between">
-                                                <span class="font-extrabold text-amber-700">Rp ${m.price.toLocaleString()}</span>
-                                                <button onclick="switchTab('pelanggan-booking')" class="bg-amber-50 text-amber-800 px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-amber-100">Booking Meja</button>
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Daftar Menu Warung Copas & Pemesanan Mandiri</h2>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    ${menus.map(m => `
+                                        <div class="bg-white p-4 rounded-2xl border border-gray-200 flex items-center gap-4">
+                                            <img src="${m.img}" class="w-16 h-16 rounded-xl object-cover">
+                                            <div class="flex-1">
+                                                <h4 class="font-bold text-gray-800 text-sm">${m.name}</h4>
+                                                <p class="text-xs text-amber-700 font-semibold mt-1">Rp ${m.price.toLocaleString()}</p>
+                                                <button onclick="addToCart(${m.id})" class="mt-2 bg-amber-50 hover:bg-amber-100 text-amber-800 px-3 py-1.5 rounded-xl text-xs font-semibold"><i class="fa-solid fa-plus"></i> Tambah</button>
                                             </div>
                                         </div>
+                                    `).join('')}
+                                </div>
+                                <div class="bg-white p-6 rounded-2xl border border-gray-200 flex flex-col justify-between">
+                                    <div class="space-y-4">
+                                        <h3 class="font-bold text-gray-800 text-lg">Keranjang Pesanan Anda</h3>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nomor Meja / Area</label>
+                                            <select id="order-table" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-sm font-medium">
+                                                <option>Meja 01 (Indoor)</option>
+                                                <option>Meja 03 (Outdoor)</option>
+                                                <option>VIP Room</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Nama Pemesan</label>
+                                            <input type="text" id="order-customer" placeholder="Nama Anda" class="w-full bg-gray-50 border border-gray-300 rounded-xl px-3 py-2.5 text-sm">
+                                        </div>
+                                        <div class="space-y-2 border-t border-b py-3 text-sm max-h-60 overflow-y-auto" id="cart-items-container">
+                                            ${activeCart.length === 0 ? '<p class="text-xs text-gray-400 text-center">Keranjang kosong</p>' : activeCart.map((item, idx) => `
+                                                <div class="flex justify-between items-center py-1">
+                                                    <div class="flex-1 pr-2">
+                                                        <div class="font-semibold text-xs text-gray-800">${item.name}</div>
+                                                        <div class="text-[11px] text-amber-700">Rp ${(item.price * item.qty).toLocaleString()}</div>
+                                                    </div>
+                                                    <div class="flex items-center gap-1.5">
+                                                        <button onclick="changeQty(${idx}, -1)" class="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-bold flex items-center justify-center">-</button>
+                                                        <span class="text-xs font-bold w-5 text-center">${item.qty}</span>
+                                                        <button onclick="changeQty(${idx}, 1)" class="w-6 h-6 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-bold flex items-center justify-center">+</button>
+                                                        <button onclick="removeFromCart(${idx})" class="text-red-500 text-xs ml-1 p-1"><i class="fa-solid fa-trash"></i></button>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                        <div class="flex justify-between font-bold text-base">
+                                            <span>Total</span>
+                                            <span class="text-amber-700" id="cart-total">Rp ${activeCart.reduce((sum, i) => sum + (i.price * i.qty), 0).toLocaleString()}</span>
+                                        </div>
                                     </div>
-                                `).join('')}
+                                    <button onclick="submitOrder()" class="mt-6 w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-semibold shadow-sm">Kirim Pesanan ke Dapur</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1338,7 +1375,8 @@
             } else {
                 activeCart.push({ id: menu.id, name: menu.name, price: menu.price, qty: 1 });
             }
-            renderContent('pelayan-pesanan');
+            if (currentRole === 'pelanggan') renderContent('pelanggan-home');
+            else renderContent('pelayan-pesanan');
             showToast(`${menu.name} ditambahkan ke keranjang.`, 'success');
         }
 
@@ -1348,13 +1386,15 @@
                 if (activeCart[idx].qty <= 0) {
                     activeCart.splice(idx, 1);
                 }
-                renderContent('pelayan-pesanan');
+                if (currentRole === 'pelanggan') renderContent('pelanggan-home');
+                else renderContent('pelayan-pesanan');
             }
         }
 
         function removeFromCart(idx) {
             activeCart.splice(idx, 1);
-            renderContent('pelayan-pesanan');
+            if (currentRole === 'pelanggan') renderContent('pelanggan-home');
+            else renderContent('pelayan-pesanan');
         }
 
         function submitOrder() {
@@ -1363,7 +1403,7 @@
                 return;
             }
             const table = document.getElementById('order-table').value;
-            const customer = document.getElementById('order-customer').value || 'Pelanggan Umum';
+            const customer = document.getElementById('order-customer').value || (currentRole === 'pelanggan' ? 'Pelanggan Online' : 'Pelanggan Umum');
             const total = activeCart.reduce((sum, i) => sum + (i.price * i.qty), 0);
             const itemsStr = activeCart.map(i => `${i.qty}x ${i.name}`).join(', ');
 
@@ -1381,7 +1421,12 @@
             saveData();
             activeCart = [];
             showToast('Pesanan berhasil dikirim ke Dapur!', 'success');
-            switchTab('pelayan-monitoring');
+            
+            if (currentRole === 'pelanggan') {
+                switchTab('pelanggan-home');
+            } else {
+                switchTab('pelayan-monitoring');
+            }
         }
 
         function updateOrderStatus(orderId, newStatus) {
