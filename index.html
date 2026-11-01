@@ -140,10 +140,18 @@
 
         // Dataset dengan localStorage persistence agar data tidak hilang saat refresh
         // Dataset dengan localStorage persistence (Dimulai dalam keadaan kosong / bersih)
-        let menus = JSON.parse(localStorage.getItem('copas_menus')) || [];
+        // Menu tetap ada untuk uji coba
+        let menus = JSON.parse(localStorage.getItem('copas_menus')) || [
+            { id: 1, name: 'Kopi Susu Gula Aren', cat: 'Minuman', price: 18000, stock: 'Aman', img: 'https://placehold.co/100x100/f59e0b/ffffff?text=Kopi' },
+            { id: 2, name: 'Mie Instan Copas Special', cat: 'Makanan', price: 15000, stock: 'Aman', img: 'https://placehold.co/100x100/ef4444/ffffff?text=Mie' },
+            { id: 3, name: 'Roti Bakar Coklat Keju', cat: 'Snack', price: 14000, stock: 'Aman', img: 'https://placehold.co/100x100/10b981/ffffff?text=Roti' },
+            { id: 4, name: 'Es Teh Manis Jumbo', cat: 'Minuman', price: 6000, stock: 'Aman', img: 'https://placehold.co/100x100/3b82f6/ffffff?text=Teh' }
+        ];
 
+        // Pesanan/Transaksi dikosongkan agar bersih dari nol
         let orders = JSON.parse(localStorage.getItem('copas_orders')) || [];
 
+        // Akun pegawai/login tetap disiapkan agar Anda bisa langsung login
         let employees = JSON.parse(localStorage.getItem('copas_employees')) || [
             { id: 'EMP-01', name: 'Ahmad Administrator', role: 'Admin', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
             { id: 'EMP-02', name: 'Sinta Kasir', role: 'Kasir', shift: 'Shift Pagi (08:00 - 16:00)', status: 'Aktif' },
@@ -152,8 +160,10 @@
             { id: 'EMP-05', name: 'Dewi Waiter', role: 'Pelayan', shift: 'Shift Siang (14:00 - 22:00)', status: 'Aktif' }
         ];
 
+        // Reservasi dikosongkan
         let reservations = JSON.parse(localStorage.getItem('copas_reservations')) || [];
 
+        // Inventaris diset sesuai kebutuhan awal
         let ingredients = JSON.parse(localStorage.getItem('copas_ingredients')) || [
             { code: 'ING-01', name: 'Biji Kopi Robusta', stock: 12, min: 5, unit: 'Kg', supplier: 'PT Kopi Nusantara' },
             { code: 'ING-02', name: 'Susu UHT Full Cream', stock: 3, min: 8, unit: 'Liter', supplier: 'CV Susu Murni' },
@@ -405,7 +415,10 @@
             c.innerHTML = '';
 
             if (id === 'dash-admin') {
-                const totalRevenue = orders.filter(o => o.status === 'Selesai').reduce((acc, curr) => acc + curr.total, 2450000);
+                // Hitung pendapatan hanya dari pesanan yang sudah selesai (atau seluruh pesanan jika ingin diakumulasi)
+const totalRevenue = orders.filter(o => o.status === 'Selesai').reduce((acc, curr) => acc + curr.total, 0);
+// Hitung jumlah total transaksi dari panjang array orders
+const totalTransactions = orders.length;
                 c.innerHTML = `
                     <div class="space-y-6">
                         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -421,28 +434,30 @@
                         </div>
 
                         <!-- 4 Kartu Metrik Utama -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
-                                <p class="text-xs font-semibold text-gray-400 uppercase">Total Pendapatan Harian</p>
-                                <h3 class="text-xl font-bold text-gray-800 mt-1">Rp ${totalRevenue.toLocaleString()}</h3>
-                                <span class="text-xs text-emerald-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up"></i> Real-time update</span>
-                            </div>
-                            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
-                                <p class="text-xs font-semibold text-gray-400 uppercase">Total Transaksi</p>
-                                <h3 class="text-xl font-bold text-gray-800 mt-1">${orders.length + 80} Transaksi</h3>
-                                <span class="text-xs text-blue-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-receipt"></i> Terhitung</span>
-                            </div>
-                            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
-                                <p class="text-xs font-semibold text-gray-400 uppercase">Total Pesanan Aktif</p>
-                                <h3 class="text-xl font-bold text-gray-800 mt-1">${orders.length} Pesanan</h3>
-                                <span class="text-xs text-amber-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-utensils"></i> Dalam proses</span>
-                            </div>
-                            <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
-                                <p class="text-xs font-semibold text-gray-400 uppercase">Total Booking</p>
-                                <h3 class="text-xl font-bold text-gray-800 mt-1">${reservations.length} Reservasi</h3>
-                                <span class="text-xs text-purple-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-calendar"></i> Aktif</span>
-                            </div>
-                        </div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+        <p class="text-xs font-semibold text-gray-400 uppercase">Total Pendapatan Harian</p>
+        <h3 class="text-xl font-bold text-gray-800 mt-1">Rp ${totalRevenue.toLocaleString()}</h3>
+        <span class="text-xs text-emerald-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-arrow-trend-up"></i> Real-time update</span>
+    </div>
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+        <p class="text-xs font-semibold text-gray-400 uppercase">Total Transaksi</p>
+        <h3 class="text-xl font-bold text-gray-800 mt-1">${totalTransactions} Transaksi</h3>
+        <span class="text-xs text-blue-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-receipt"></i> Terhitung</span>
+    </div>
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+        <p class="text-xs font-semibold text-gray-400 uppercase">Total Pesanan Aktif</p>
+        <h3 class="text-xl font-bold text-gray-800 mt-1">${orders.length} Pesanan</h3>
+        <span class="text-xs text-amber-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-utensils"></i> Dalam proses</span>
+    </div>
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
+        <p class="text-xs font-semibold text-gray-400 uppercase">Total Booking</p>
+        <h3 class="text-xl font-bold text-gray-800 mt-1">${reservations.length} Reservasi</h3>
+        <span class="text-xs text-purple-600 font-semibold mt-1 inline-flex items-center gap-1"><i class="fa-solid fa-calendar"></i> Aktif</span>
+    </div>
+</div>
+
+
 
                         <!-- Grafik & Peringatan Inventaris -->
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
