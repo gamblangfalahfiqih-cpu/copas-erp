@@ -177,6 +177,27 @@
         let activeCart = [];
         let activeTab = '';
 
+        function completePayment(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+        order.status = 'Selesai'; // Ubah status jadi Selesai agar terhitung di pendapatan admin
+        saveData(); // Simpan ke localStorage
+        renderContent(); // Refresh tampilan
+        showToast('Pembayaran berhasil diselesaikan!', 'success');
+    }
+}
+
+function saveData() {
+    localStorage.setItem('copas_orders', JSON.stringify(orders));
+    localStorage.setItem('copas_menus', JSON.stringify(menus));
+    localStorage.setItem('copas_employees', JSON.stringify(employees));
+    localStorage.setItem('copas_reservations', JSON.stringify(reservations));
+    localStorage.setItem('copas_ingredients', JSON.stringify(ingredients));
+}
+
+
+
+
         // Fungsi Membuka Modal Update Stok Bahan Baku
         function openUpdateStockModal(code) {
             const ing = ingredients.find(i => i.code === code);
